@@ -16,13 +16,14 @@ import numpy as np
 class Testing:
     """Used to test the results of classification."""
 
-    def __init__(self, model, X_test, y_test, model_name: str, oos_label, bin_model=None):
+    def __init__(self, model, X_test, y_test, model_name: str, oos_label, bin_model=None, bin_oos_label=None):
         self.model = model
         self.X_test = X_test  # tf.Tensor
         self.y_test = y_test  # tf.Tensor
         self.oos_label = oos_label  # number
         self.model_name = model_name
         self.bin_model = bin_model
+        self.bin_oos_label = bin_oos_label
 
     def test_train(self):
         accuracy_correct, accuracy_out_of = 0, 0
@@ -30,10 +31,7 @@ class Testing:
 
         tp, tn, fp, fn = 0, 0, 0, 0
 
-        if self.model_name == 'keras_something':
-            pass  # gonna need a different predict
-        else:
-            pred_labels = self.model.predict(self.X_test)
+        pred_labels = self.model.predict(self.X_test)
 
         for pred_label, true_label in zip(pred_labels, self.y_test):
 
@@ -72,7 +70,7 @@ class Testing:
         tp, tn, fp, fn = 0, 0, 0, 0
 
         pred_probs = self.model.predict_proba(
-            self.X_test)  # function available in both scikit-learn and TF-Keras, returns numpy array
+            self.X_test)  # returns numpy array
 
         pred_labels = np.argmax(pred_probs, axis=1)
         pred_similarities = np.take_along_axis(pred_probs, indices=np.expand_dims(pred_labels, axis=1),
@@ -116,14 +114,11 @@ class Testing:
 
         tp, tn, fp, fn = 0, 0, 0, 0
 
-        if self.model_name == 'keras_something':
-            pass  # gonna need a different predict
-        else:
-            pred_bin_labels = self.bin_model.predict(self.X_test)
-            pred_multi_labels = self.model.predict(self.X_test)
+        pred_bin_labels = self.bin_model.predict(self.X_test)
+        pred_multi_labels = self.model.predict(self.X_test)
 
         for pred_bin_label, pred_multi_label, true_label in zip(pred_bin_labels, pred_multi_labels, self.y_test):
-            if pred_bin_label != self.oos_label:
+            if pred_bin_label != self.bin_oos_label:
                 pred_label = pred_multi_label
             else:
                 pred_label = self.oos_label

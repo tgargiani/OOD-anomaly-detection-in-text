@@ -1,10 +1,12 @@
 from utils import DS_CLINC150_PATH, USE_DAN_PATH, USE_TRAN_PATH, print_results
 from CosineSimilarity import CosineSimilarity
+from NeuralNets import NeuralNet, NeuralNetExtraLayer
 
 import os, json
 import tensorflow_hub as hub
 from sentence_transformers import SentenceTransformer
 from sklearn.linear_model import LogisticRegression
+from tensorflow.keras import activations, losses
 
 LIMIT_NUM_SENTS = False
 
@@ -15,15 +17,27 @@ imports = []
 # ------------------------------------------------------------
 from ood_train import evaluate
 
-imports.append((evaluate, [CosineSimilarity(), LogisticRegression()]))
+imports.append((evaluate, [
+    NeuralNetExtraLayer(activations.softmax, losses.SparseCategoricalCrossentropy()),
+    NeuralNet(activations.softmax, losses.SparseCategoricalCrossentropy()),
+    CosineSimilarity(),
+    LogisticRegression()]))
 # ------------------------------------------------------------
 # from ood_threshold import evaluate
 #
-# imports.append((evaluate, [CosineSimilarity(), LogisticRegression()]))
+# imports.append((evaluate, [
+#     NeuralNetExtraLayer(activations.softmax, losses.SparseCategoricalCrossentropy()),
+#     NeuralNet(activations.softmax, losses.SparseCategoricalCrossentropy()),
+#     CosineSimilarity(),
+#     LogisticRegression()]))
 # ------------------------------------------------------------
 # from ood_binary import evaluate
 #
-# imports.append((evaluate, [CosineSimilarity(), LogisticRegression()]))
+# imports.append((evaluate, [
+#     NeuralNetExtraLayer(activations.softmax, losses.SparseCategoricalCrossentropy()),
+#     NeuralNet(activations.softmax, losses.SparseCategoricalCrossentropy()),
+#     CosineSimilarity(),
+#     LogisticRegression()]))
 # ------------------------------------------------------------
 
 # Load dataset

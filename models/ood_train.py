@@ -16,8 +16,11 @@ def evaluate(dataset, model, embed_f, limit_num_sents: bool):
                                      set_type='train')
 
     # Train
-    if model_name == 'keras_something':
-        pass  # gonna need a different fit
+    if model_name == 'NeuralNet' or model_name == 'NeuralNetExtraLayer':
+        X_val, y_val = split.get_X_y(dataset['val'] + dataset['oos_val'], limit_num_sents=limit_num_sents,
+                                     set_type='val')
+
+        model.fit(X_train, y_train, X_val, y_val)
     else:
         model.fit(X_train, y_train)
 

@@ -17,8 +17,11 @@ def evaluate(dataset, model, embed_f, limit_num_sents: bool):
     X_val, y_val = split.get_X_y(dataset['val'] + dataset['oos_val'], limit_num_sents=limit_num_sents, set_type='val')
 
     # Train
-    if model_name == 'keras_something':
-        pass  # gonna need a different fit
+    if model_name == 'NeuralNet' or model_name == 'NeuralNetExtraLayer':
+        X_val_fit, y_val_fit = split.get_X_y(dataset['val'], limit_num_sents=limit_num_sents,
+                                             set_type='val')  # validation split must contain same labels as train split
+
+        model.fit(X_train, y_train, X_val_fit, y_val_fit)
     else:
         model.fit(X_train, y_train)
 
