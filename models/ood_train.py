@@ -1,11 +1,10 @@
-from utils import Split
+from utils import Split, NN_NAMES
 from testing import Testing
 
 import time
 
 
-def evaluate(dataset, model, embed_f, limit_num_sents: bool):
-    model_name = type(model).__name__
+def evaluate(dataset, model, model_name, embed_f, limit_num_sents: bool):
     split = Split(embed_f)
 
     # TRAINING
@@ -16,7 +15,7 @@ def evaluate(dataset, model, embed_f, limit_num_sents: bool):
                                      set_type='train')
 
     # Train
-    if model_name == 'NeuralNet' or model_name == 'NeuralNetExtraLayer':
+    if model_name in NN_NAMES:
         X_val, y_val = split.get_X_y(dataset['val'] + dataset['oos_val'], limit_num_sents=limit_num_sents,
                                      set_type='val')
 

@@ -1,12 +1,11 @@
 from utils import DS_CLINC150_PATH, USE_DAN_PATH, USE_TRAN_PATH, print_results
 from CosineSimilarity import CosineSimilarity
-from NeuralNets import NeuralNet, NeuralNetExtraLayer
+from NeuralNets import BaselineNN, BaselineNNExtraLayer, CosFaceNN, CosFaceNNExtraLayer
 
 import os, json
 import tensorflow_hub as hub
 from sentence_transformers import SentenceTransformer
 from sklearn.linear_model import LogisticRegression
-from tensorflow.keras import activations, losses
 
 LIMIT_NUM_SENTS = False
 
@@ -18,24 +17,30 @@ imports = []
 from ood_train import evaluate
 
 imports.append((evaluate, [
-    NeuralNetExtraLayer(activations.softmax, losses.SparseCategoricalCrossentropy()),
-    NeuralNet(activations.softmax, losses.SparseCategoricalCrossentropy()),
+    CosFaceNN(),
+    CosFaceNNExtraLayer(),
+    BaselineNN(),
+    BaselineNNExtraLayer(),
     CosineSimilarity(),
     LogisticRegression()]))
 # ------------------------------------------------------------
 # from ood_threshold import evaluate
 #
 # imports.append((evaluate, [
-#     NeuralNetExtraLayer(activations.softmax, losses.SparseCategoricalCrossentropy()),
-#     NeuralNet(activations.softmax, losses.SparseCategoricalCrossentropy()),
+#     CosFaceNN(),
+#     CosFaceNNExtraLayer(),
+#     BaselineNN(),
+#     BaselineNNExtraLayer(),
 #     CosineSimilarity(),
 #     LogisticRegression()]))
 # ------------------------------------------------------------
 # from ood_binary import evaluate
 #
 # imports.append((evaluate, [
-#     NeuralNetExtraLayer(activations.softmax, losses.SparseCategoricalCrossentropy()),
-#     NeuralNet(activations.softmax, losses.SparseCategoricalCrossentropy()),
+#     CosFaceNN(),
+#     CosFaceNNExtraLayer(),
+#     BaselineNN(),
+#     BaselineNNExtraLayer(),
 #     CosineSimilarity(),
 #     LogisticRegression()]))
 # ------------------------------------------------------------
@@ -61,6 +66,6 @@ for i in imports:
     for emb_name, embed_f in embedding_functions.items():
         for model in i[1]:
             model_name = type(model).__name__
-            results_dct = evaluate(dataset, model, embed_f, LIMIT_NUM_SENTS)
+            results_dct = evaluate(dataset, model, model_name, embed_f, LIMIT_NUM_SENTS)
 
             print_results(dataset_name, model_name, emb_name, results_dct)
