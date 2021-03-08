@@ -30,10 +30,10 @@ class AbstractNeuralNet(ABC):
                            loss=self.loss,
                            metrics=['accuracy'])
 
-        if self.model_name in ['CosFaceNN', 'CosFaceNNExtraLayer', 'CosFaceLOFNN']:
+        if self.model_name in ['CosFaceNN', 'CosFaceNNExtraLayer', 'CosFaceLOFNN', 'ArcFaceNN', 'ArcFaceNNExtraLayer']:
             X_train = [X_train, y_train]
 
-        self.model.fit(X_train, y_train, validation_data=(X_val, y_val), epochs=10)
+        self.model.fit(X_train, y_train, validation_data=(X_val, y_val), epochs=40)
 
         if self.model_name == 'CosFaceLOFNN':
             X_train = X_train[0]

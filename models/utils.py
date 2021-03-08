@@ -13,7 +13,8 @@ DS_CLINC150_PATH = os.path.join(DS_PATH, 'CLINC150')
 NUM_SENTS = {'train': 18, 'val': 18, 'test': 30, 'train_oos': 20, 'val_oos': 20, 'test_oos': 60}
 
 EXTRA_LAYER_ACT_F = tf.keras.activations.relu  # specifies the activation function of the extra layer in NNs
-NN_NAMES = ['BaselineNN', 'BaselineNNExtraLayer', 'CosFaceNN', 'CosFaceNNExtraLayer', 'CosFaceLOFNN']  # names of NNs
+NN_NAMES = ['BaselineNN', 'BaselineNNExtraLayer', 'CosFaceNN', 'CosFaceNNExtraLayer', 'CosFaceLOFNN', 'ArcFaceNN',
+            'ArcFaceNNExtraLayer']  # names of NNs, should contain all classes in NeuralNets.py
 
 
 class Split:

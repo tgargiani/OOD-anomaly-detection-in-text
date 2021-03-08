@@ -1,5 +1,5 @@
 from AbstractNeuralNet import AbstractNeuralNet
-from custom_models import CosFaceModel
+from custom_models import CosFaceModel, ArcFaceModel
 from utils import EXTRA_LAYER_ACT_F
 
 import tensorflow as tf
@@ -62,5 +62,29 @@ class CosFaceLOFNN(AbstractNeuralNet):
 
     def create_model(self, emb_dim, num_classes):
         model = CosFaceModel(emb_dim, num_classes, extra_layer=True)
+
+        return model
+
+
+class ArcFaceNN(AbstractNeuralNet):
+    """
+    ArcFace Neural Net
+    Based on https://arxiv.org/pdf/1801.07698.pdf.
+    """
+
+    def create_model(self, emb_dim, num_classes):
+        model = ArcFaceModel(emb_dim, num_classes)
+
+        return model
+
+
+class ArcFaceNNExtraLayer(AbstractNeuralNet):
+    """
+    ArcFace Neural Net Extra Layer
+    Based on https://arxiv.org/pdf/1801.07698.pdf.
+    """
+
+    def create_model(self, emb_dim, num_classes):
+        model = ArcFaceModel(emb_dim, num_classes, extra_layer=True)
 
         return model

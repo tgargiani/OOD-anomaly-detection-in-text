@@ -1,6 +1,7 @@
 from utils import DS_CLINC150_PATH, USE_DAN_PATH, USE_TRAN_PATH, print_results
 from CosineSimilarity import CosineSimilarity
-from NeuralNets import BaselineNN, BaselineNNExtraLayer, CosFaceNN, CosFaceNNExtraLayer, CosFaceLOFNN
+from NeuralNets import BaselineNN, BaselineNNExtraLayer, CosFaceNN, CosFaceNNExtraLayer, CosFaceLOFNN, ArcFaceNN, \
+    ArcFaceNNExtraLayer
 
 import os, json
 import tensorflow_hub as hub
@@ -17,6 +18,8 @@ imports = []
 from ood_train import evaluate
 
 imports.append((evaluate, [
+    ArcFaceNN(),
+    ArcFaceNNExtraLayer(),
     CosFaceLOFNN(),
     CosFaceNN(),
     CosFaceNNExtraLayer(),
@@ -28,6 +31,8 @@ imports.append((evaluate, [
 # from ood_threshold import evaluate
 #
 # imports.append((evaluate, [
+#     ArcFaceNN(),
+#     ArcFaceNNExtraLayer(),
 #     CosFaceNN(),
 #     CosFaceNNExtraLayer(),
 #     BaselineNN(),
@@ -38,6 +43,8 @@ imports.append((evaluate, [
 # from ood_binary import evaluate
 #
 # imports.append((evaluate, [
+#     ArcFaceNN(),
+#     ArcFaceNNExtraLayer(),
 #     CosFaceNN(),
 #     CosFaceNNExtraLayer(),
 #     BaselineNN(),
