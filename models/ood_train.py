@@ -19,6 +19,9 @@ def evaluate(dataset, model, model_name, embed_f, limit_num_sents: bool):
         X_val, y_val = split.get_X_y(dataset['val'] + dataset['oos_val'], limit_num_sents=limit_num_sents,
                                      set_type='val')
 
+        if model_name == 'CosFaceLOFNN':
+            model.oos_label = split.intents_dct['oos']
+
         model.fit(X_train, y_train, X_val, y_val)
     else:
         model.fit(X_train, y_train)

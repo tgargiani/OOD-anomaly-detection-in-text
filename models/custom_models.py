@@ -8,13 +8,14 @@ from tensorflow.keras import layers
 class CosFaceModel(tf.keras.Model):
     def __init__(self, emb_dim, num_classes, extra_layer=False):
         super(CosFaceModel, self).__init__()
-        self.inp = tf.keras.layers.Input(shape=emb_dim)
-        self.inp2 = tf.keras.layers.Input(shape=())
-        self.cosface = CosFace(num_classes=num_classes)
         self.extra_layer = extra_layer
+        self.inp = layers.Input(shape=emb_dim)
+        self.inp2 = layers.Input(shape=())
 
         if extra_layer:
             self.dense = layers.Dense(emb_dim, EXTRA_LAYER_ACT_F)
+
+        self.cosface = CosFace(num_classes=num_classes)
 
     def call(self, inputs, training=None):
         if training:

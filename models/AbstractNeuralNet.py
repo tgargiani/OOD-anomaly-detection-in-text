@@ -1,7 +1,10 @@
+from utils import EXTRA_LAYER_ACT_F
+
 from abc import ABC, abstractmethod
 import tensorflow as tf
-from tensorflow.keras import losses
+from tensorflow.keras import losses, layers
 import numpy as np
+from sklearn.neighbors import LocalOutlierFactor
 
 
 class AbstractNeuralNet(ABC):
@@ -11,6 +14,7 @@ class AbstractNeuralNet(ABC):
         self.model = None
         self.model_name = type(self).__name__
         self.loss = loss
+        self.oos_label = None  # used for CosFaceLofNN
 
     @abstractmethod
     def create_model(self, emb_dim, num_classes):
@@ -26,16 +30,39 @@ class AbstractNeuralNet(ABC):
                            loss=self.loss,
                            metrics=['accuracy'])
 
-        if self.model_name in ['CosFaceNN', 'CosFaceNNExtraLayer']:
+        if self.model_name in ['CosFaceNN', 'CosFaceNNExtraLayer', 'CosFaceLOFNN']:
             X_train = [X_train, y_train]
 
-        self.model.fit(X_train, y_train, validation_data=(X_val, y_val), epochs=40)
+        self.model.fit(X_train, y_train, validation_data=(X_val, y_val), epochs=10)
+
+        if self.model_name == 'CosFaceLOFNN':
+            X_train = X_train[0]
+            weights = self.model.layers[0].get_weights()  # weights of Dense layer
+
+            self.feat_model = tf.keras.Sequential([  # same as self.model except last layer (CosFace)
+                layers.Input(emb_dim),
+                layers.Dense(emb_dim, EXTRA_LAYER_ACT_F)])
+
+            self.feat_model.layers[0].set_weights(weights)
+
+            self.lof = LocalOutlierFactor(novelty=True, n_jobs=-1)
+
+            X_lof_train = self.feat_model.predict(X_train)
+            self.lof.fit(X_lof_train)
 
     def predict(self, X_test):
         """Returns predictions with class labels."""
 
         probs = self.model.predict(X_test)
         predictions = np.argmax(probs, axis=1)
+
+        if self.model_name == 'CosFaceLOFNN':
+            # self.model also predicts 'oos', they work cooperatively
+
+            X_lof_test = self.feat_model.predict(X_test)
+            lof_preds = self.lof.predict(X_lof_test)
+
+            predictions = np.where(lof_preds == 1, predictions, self.oos_label)
 
         return predictions
 

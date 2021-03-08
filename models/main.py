@@ -1,6 +1,6 @@
 from utils import DS_CLINC150_PATH, USE_DAN_PATH, USE_TRAN_PATH, print_results
 from CosineSimilarity import CosineSimilarity
-from NeuralNets import BaselineNN, BaselineNNExtraLayer, CosFaceNN, CosFaceNNExtraLayer
+from NeuralNets import BaselineNN, BaselineNNExtraLayer, CosFaceNN, CosFaceNNExtraLayer, CosFaceLOFNN
 
 import os, json
 import tensorflow_hub as hub
@@ -17,6 +17,7 @@ imports = []
 from ood_train import evaluate
 
 imports.append((evaluate, [
+    CosFaceLOFNN(),
     CosFaceNN(),
     CosFaceNNExtraLayer(),
     BaselineNN(),

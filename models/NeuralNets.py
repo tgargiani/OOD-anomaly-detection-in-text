@@ -30,7 +30,10 @@ class BaselineNNExtraLayer(AbstractNeuralNet):
 
 
 class CosFaceNN(AbstractNeuralNet):
-    """CosFace Neural Net"""
+    """
+    CosFace Neural Net
+    Based on https://arxiv.org/abs/1801.09414.
+    """
 
     def create_model(self, emb_dim, num_classes):
         model = CosFaceModel(emb_dim, num_classes)
@@ -39,7 +42,23 @@ class CosFaceNN(AbstractNeuralNet):
 
 
 class CosFaceNNExtraLayer(AbstractNeuralNet):
-    """CosFace Neural Net Extra Layer"""
+    """
+    CosFace Neural Net Extra Layer
+    Based on https://arxiv.org/abs/1801.09414.
+    """
+
+    def create_model(self, emb_dim, num_classes):
+        model = CosFaceModel(emb_dim, num_classes, extra_layer=True)
+
+        return model
+
+
+class CosFaceLOFNN(AbstractNeuralNet):
+    """
+    CosFace with Local Outlier Factor Neural Net
+    Modified version of https://www.aclweb.org/anthology/P19-1548/.
+    Used only in ood_train.
+    """
 
     def create_model(self, emb_dim, num_classes):
         model = CosFaceModel(emb_dim, num_classes, extra_layer=True)
