@@ -1,4 +1,4 @@
-from utils import Split, NN_NAMES
+from utils import Split, NEEDS_VAL
 from testing import Testing
 
 import time
@@ -11,11 +11,16 @@ def evaluate(dataset, model, model_name, embed_f, limit_num_sents: bool):
     start_time_train = time.time()
 
     # Split dataset
-    X_train, y_train = split.get_X_y(dataset['train'] + dataset['oos_train'], limit_num_sents=limit_num_sents,
+    if model_name == 'AdaptiveDecisionBoundaryNN':
+        train_dataset = dataset['train']
+    else:
+        train_dataset = dataset['train'] + dataset['oos_train']
+
+    X_train, y_train = split.get_X_y(train_dataset, limit_num_sents=limit_num_sents,
                                      set_type='train')
 
     # Train
-    if model_name in NN_NAMES:
+    if model_name in NEEDS_VAL:
         X_val, y_val = split.get_X_y(dataset['val'] + dataset['oos_val'], limit_num_sents=limit_num_sents,
                                      set_type='val')
 
@@ -34,6 +39,9 @@ def evaluate(dataset, model, model_name, embed_f, limit_num_sents: bool):
     # Split dataset
     X_test, y_test = split.get_X_y(dataset['test'] + dataset['oos_test'], limit_num_sents=limit_num_sents,
                                    set_type='test')
+
+    if model_name == 'AdaptiveDecisionBoundaryNN':
+        model.oos_label = split.intents_dct['oos']
 
     # Test
     testing = Testing(model, X_test, y_test, model_name, split.intents_dct['oos'])

@@ -13,8 +13,8 @@ DS_CLINC150_PATH = os.path.join(DS_PATH, 'CLINC150')
 NUM_SENTS = {'train': 18, 'val': 18, 'test': 30, 'train_oos': 20, 'val_oos': 20, 'test_oos': 60}
 
 EXTRA_LAYER_ACT_F = tf.keras.activations.relu  # specifies the activation function of the extra layer in NNs
-NN_NAMES = ['BaselineNN', 'BaselineNNExtraLayer', 'CosFaceNN', 'CosFaceNNExtraLayer', 'CosFaceLOFNN', 'ArcFaceNN',
-            'ArcFaceNNExtraLayer']  # names of NNs, should contain all classes in NeuralNets.py
+NEEDS_VAL = ['BaselineNN', 'BaselineNNExtraLayer', 'CosFaceNN', 'CosFaceNNExtraLayer', 'CosFaceLOFNN', 'ArcFaceNN',
+             'ArcFaceNNExtraLayer']  # names of models that need validation splits, it's the majority of NNs
 
 
 class Split:
@@ -123,3 +123,41 @@ def find_best_threshold(val_predictions_labels, oos_label):
         threshold = tr
 
     return threshold
+
+
+def compute_centroids(X, y):
+    X = np.asarray(X)
+    y = np.asarray(y)
+
+    emb_dim = X.shape[1]
+    classes = set(y)
+    num_classes = len(classes)
+
+    centroids = np.zeros(shape=(num_classes, emb_dim))
+
+    for label in range(num_classes):
+        embeddings = X[y == label]
+        num_embeddings = len(embeddings)
+
+        for emb in embeddings:
+            centroids[label, :] += emb
+
+        centroids[label, :] /= num_embeddings
+
+    return tf.convert_to_tensor(centroids, dtype=tf.float32)
+
+
+def euclidean_metric(X, centroids):
+    X = np.asarray(X)
+    centroids = np.asarray(centroids)
+
+    num_embeddings = X.shape[0]
+    num_centroids = centroids.shape[0]  # equivalent to num_classes
+
+    # modify arrays to shape (num_embeddings, num_centroids, emb_dim) in order to compare them
+    x = np.repeat(X[:, np.newaxis, :], repeats=num_centroids, axis=1)
+    centroids = np.repeat(centroids[np.newaxis, :, :], repeats=num_embeddings, axis=0)
+
+    logits = -np.sum((x - centroids) ** 2, axis=2)  # shape (num_embeddings, num_centroids)
+
+    return tf.convert_to_tensor(logits)

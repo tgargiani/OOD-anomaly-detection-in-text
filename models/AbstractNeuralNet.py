@@ -69,6 +69,9 @@ class AbstractNeuralNet(ABC):
     def predict_proba(self, X_test):
         """Returns probabilities of each label."""
 
+        if self.model_name == 'CosFaceLOFNN':
+            raise NotImplementedError("CosFace with Local Outlier Factor Neural Net can be used only in ood_train.")
+
         probs = self.model.predict(X_test)
 
         return probs

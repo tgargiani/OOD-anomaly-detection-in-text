@@ -1,9 +1,11 @@
 from AbstractNeuralNet import AbstractNeuralNet
 from custom_models import CosFaceModel, ArcFaceModel
-from utils import EXTRA_LAYER_ACT_F
+from custom_layers import AdaptiveDecisionBoundary
+from utils import EXTRA_LAYER_ACT_F, compute_centroids, euclidean_metric
 
 import tensorflow as tf
 from tensorflow.keras import layers, activations
+import numpy as np
 
 
 class BaselineNN(AbstractNeuralNet):
@@ -88,3 +90,52 @@ class ArcFaceNNExtraLayer(AbstractNeuralNet):
         model = ArcFaceModel(emb_dim, num_classes, extra_layer=True)
 
         return model
+
+
+class AdaptiveDecisionBoundaryNN:
+    """
+    Adaptive Decision Boundary Neural Net
+    Based on https://arxiv.org/pdf/2012.10209.pdf.
+    """
+
+    def __init__(self):
+        tf.random.set_seed(7)  # set seed in order to have reproducible results
+
+        self.model = None
+        self.model_name = type(self).__name__
+        self.delta = None
+        self.centroids = None
+        self.oos_label = None
+
+    def fit(self, X_train, y_train):
+        num_embeddings, emb_dim = X_train.shape  # number of embeddings, embedding dimension
+        num_classes = len(set(np.asarray(y_train)))  # number of classes
+        self.centroids = compute_centroids(X_train, y_train)
+
+        print(num_embeddings, emb_dim)
+
+        embedding_input = layers.Input(shape=(emb_dim))
+        label_input = layers.Input(shape=(1))
+        loss = AdaptiveDecisionBoundary(num_classes, self.centroids)((embedding_input, label_input))
+        self.model = tf.keras.Model(inputs=[embedding_input, label_input], outputs=loss)
+
+        self.model.compile(optimizer=tf.keras.optimizers.Adam(learning_rate=0.01), loss=None)
+        self.model.fit([X_train, y_train], None, epochs=10)
+
+        self.delta = self.model.layers[-1].delta
+
+    def predict(self, X_test):
+        logits = euclidean_metric(X_test, self.centroids)
+        probs = tf.nn.softmax(logits)
+        predictions = tf.math.argmax(probs, axis=1)
+
+        c = tf.gather(self.centroids, predictions)
+        d = tf.gather(self.delta, predictions)
+
+        distance = tf.norm(X_test - c, ord='euclidean', axis=1)
+        predictions = np.where(distance < d, predictions, self.oos_label)
+
+        return predictions
+
+    def predict_proba(self, X_test):
+        raise NotImplementedError("Adaptive Decision Boundary Neural Net can be used only in ood_train.")

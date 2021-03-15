@@ -1,7 +1,7 @@
 from utils import DS_CLINC150_PATH, USE_DAN_PATH, USE_TRAN_PATH, print_results
 from CosineSimilarity import CosineSimilarity
 from NeuralNets import BaselineNN, BaselineNNExtraLayer, CosFaceNN, CosFaceNNExtraLayer, CosFaceLOFNN, ArcFaceNN, \
-    ArcFaceNNExtraLayer
+    ArcFaceNNExtraLayer, AdaptiveDecisionBoundaryNN
 
 import os, json
 import tensorflow_hub as hub
@@ -12,12 +12,14 @@ LIMIT_NUM_SENTS = False
 
 embedding_functions = {'use_dan': hub.load(USE_DAN_PATH), 'use_tran': hub.load(USE_TRAN_PATH),
                        'sbert': SentenceTransformer('stsb-roberta-base').encode}
+
 imports = []
 
 # ------------------------------------------------------------
 from ood_train import evaluate
 
 imports.append((evaluate, [
+    AdaptiveDecisionBoundaryNN(),
     ArcFaceNN(),
     ArcFaceNNExtraLayer(),
     CosFaceLOFNN(),

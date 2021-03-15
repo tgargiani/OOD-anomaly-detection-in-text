@@ -1,4 +1,4 @@
-from utils import Split, find_best_threshold, NN_NAMES
+from utils import Split, find_best_threshold, NEEDS_VAL
 from testing import Testing
 
 import time
@@ -16,7 +16,7 @@ def evaluate(dataset, model, model_name, embed_f, limit_num_sents: bool):
     X_val, y_val = split.get_X_y(dataset['val'] + dataset['oos_val'], limit_num_sents=limit_num_sents, set_type='val')
 
     # Train
-    if model_name in NN_NAMES:
+    if model_name in NEEDS_VAL:
         X_val_fit, y_val_fit = split.get_X_y(dataset['val'], limit_num_sents=limit_num_sents,
                                              set_type='val')  # validation split must contain same labels as train split
 

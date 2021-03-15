@@ -1,4 +1,4 @@
-from utils import Split, DS_CLINC150_PATH, NN_NAMES
+from utils import Split, DS_CLINC150_PATH, NEEDS_VAL
 from testing import Testing
 
 import os, json, time, copy
@@ -28,7 +28,7 @@ def train_model_multi(model_multi, embed_f, limit_num_sents: bool):
     time_inference_split = time.time() - start_time_inference_split
 
     # Train
-    if model_multi_name in NN_NAMES:
+    if model_multi_name in NEEDS_VAL:
         X_multi_val, y_multi_val = split_multi.get_X_y(dataset['val'], limit_num_sents=limit_num_sents, set_type='val')
 
         model_multi.fit(X_multi_train, y_multi_train, X_multi_val, y_multi_val)
@@ -53,7 +53,7 @@ def evaluate(dataset, model, model_name, embed_f, limit_num_sents: bool):
     X_bin_train, y_bin_train = split.get_X_y(dataset['train'], limit_num_sents=False, set_type='train')
 
     # Train
-    if model_name in NN_NAMES:
+    if model_name in NEEDS_VAL:
         X_bin_val, y_bin_val = split.get_X_y(dataset['val'], limit_num_sents=False, set_type='val')
 
         model.fit(X_bin_train, y_bin_train, X_bin_val, y_bin_val)

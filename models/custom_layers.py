@@ -1,5 +1,5 @@
 import tensorflow as tf
-from tensorflow.keras import layers
+from tensorflow.keras import layers, activations
 import tensorflow.keras.backend as K
 import math
 
@@ -145,3 +145,47 @@ class ArcFace(layers.Layer):
             output = self._s * cosine_sim
 
         return tf.nn.softmax(output)
+
+
+class AdaptiveDecisionBoundary(layers.Layer):
+    """
+    Implementation of ADB as last layer that directly computes loss. Compile model with loss=None.
+    Reference: https://arxiv.org/pdf/2012.10209.pdf.
+    Code ported from: https://github.com/thuiar/Adaptive-Decision-Boundary.
+    Inspiration: https://stackoverflow.com/questions/64223840/use-additional-trainable-variables-in-keras-tensorflow-custom-loss-function.
+    """
+
+    def __init__(self, num_classes, centroids):
+        super().__init__()
+        self.delta = tf.Variable(tf.random.normal([num_classes]), trainable=True)
+        self.centroids = tf.Variable(centroids, trainable=False, dtype=tf.float32)
+
+    def custom_loss(self, embeddings, labels):
+        labels = tf.cast(labels, dtype=tf.int32)  # TF has automatically casted to tf.float32, revert back
+        soft_delta = activations.softplus(self.delta)
+
+        # c = centroids[labels] # can't do this because eager execution isn't enabled
+        # d = soft_delta[labels]
+        c = tf.gather(self.centroids, labels)
+        d = tf.gather(soft_delta, labels)
+
+        distance = tf.norm(embeddings - c, ord='euclidean', axis=2)  # extra batch dimension -> axis=2 (instead of 1)
+
+        pos_mask = tf.cast([distance >= d], dtype=tf.float32)
+        neg_mask = tf.cast([distance < d], dtype=tf.float32)
+
+        pos_loss = (distance - d) * pos_mask * 500  # multiplication was introduced by TG
+        neg_loss = (d - distance) * neg_mask
+        loss = tf.reduce_mean(pos_loss) + tf.reduce_mean(neg_loss)
+
+        return loss
+
+    def call(self, inputs):
+        # Layer (and model) used only for training, so it will always receive the same inputs.
+        # The whole loss is computed in this layer, therefore model should be compiled with loss=None.
+
+        embeddings, labels = inputs
+        loss = self.custom_loss(embeddings, labels)
+        self.add_loss(loss)
+
+        return loss
