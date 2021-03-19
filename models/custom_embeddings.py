@@ -23,7 +23,7 @@ def create_bert_softmax_embed_f(dataset_train, limit_num_sents):
     model = ADBPretrainSoftmaxModel(SEQ_LEN, num_classes)
     model.compile(optimizer=optimizers.Adam(learning_rate=2e-5), loss=losses.SparseCategoricalCrossentropy(),
                   metrics=['accuracy'])
-    model.fit([train_input_ids, train_attention_mask, train_token_type_ids], y_train, epochs=10)
+    model.fit([train_input_ids, train_attention_mask, train_token_type_ids], y_train, epochs=2)
 
     def embed_f(X):
         encoded_batch = tokenizer(X, padding='max_length', max_length=SEQ_LEN, truncation=True,
