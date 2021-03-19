@@ -112,8 +112,6 @@ class AdaptiveDecisionBoundaryNN:
         num_classes = len(set(np.asarray(y_train)))  # number of classes
         self.centroids = compute_centroids(X_train, y_train)
 
-        print(num_embeddings, emb_dim)
-
         embedding_input = layers.Input(shape=(emb_dim))
         label_input = layers.Input(shape=(1))
         loss = AdaptiveDecisionBoundary(num_classes, self.centroids)((embedding_input, label_input))

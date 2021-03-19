@@ -1,4 +1,5 @@
 from utils import DS_CLINC150_PATH, USE_DAN_PATH, USE_TRAN_PATH, print_results
+from custom_embeddings import create_bert_softmax_embed_f
 from CosineSimilarity import CosineSimilarity
 from NeuralNets import BaselineNN, BaselineNNExtraLayer, CosFaceNN, CosFaceNNExtraLayer, CosFaceLOFNN, ArcFaceNN, \
     ArcFaceNNExtraLayer, AdaptiveDecisionBoundaryNN
@@ -9,9 +10,6 @@ from sentence_transformers import SentenceTransformer
 from sklearn.linear_model import LogisticRegression
 
 LIMIT_NUM_SENTS = False
-
-embedding_functions = {'use_dan': hub.load(USE_DAN_PATH), 'use_tran': hub.load(USE_TRAN_PATH),
-                       'sbert': SentenceTransformer('stsb-roberta-base').encode}
 
 imports = []
 
@@ -69,6 +67,13 @@ dataset_path = os.path.join(DS_CLINC150_PATH, 'data_full.json')
 
 with open(dataset_path) as f:
     dataset = json.load(f)
+
+embedding_functions = {}
+embedding_functions['use_dan'] = hub.load(USE_DAN_PATH)
+embedding_functions['use_tran'] = hub.load(USE_TRAN_PATH)
+embedding_functions['sbert'] = SentenceTransformer('stsb-roberta-base').encode
+# embedding_functions['bert_softmax'] = create_bert_softmax_embed_f(dataset['train'],
+#                                                                   LIMIT_NUM_SENTS)  # to be used only with ADB
 
 for i in imports:
     evaluate = i[0]

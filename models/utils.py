@@ -38,7 +38,7 @@ class Split:
         :param:             lst - contains the dataset, list
                             limit_num_sents - specifies if every intent should have a limited number of sentences, bool
                             set_type - specifies the type of the received dataset (train, val or test), str
-        :returns:           X - sentences encoded as embeddings, tf.Tensor
+        :returns:           X - sentences encoded as embeddings, tf.Tensor OR sentences, list
                             y - intents, tf.Tensor
         """
 
@@ -69,9 +69,10 @@ class Split:
             X.append(sent)
             y.append(self.intents_dct[label])
 
-        X = self.embed_f(X)
+        if self.embed_f is not None:
+            X = self.embed_f(X)
+            X = tf.convert_to_tensor(X, dtype='float32')
 
-        X = tf.convert_to_tensor(X, dtype='float32')
         y = tf.convert_to_tensor(y, dtype='int32')
 
         return X, y
