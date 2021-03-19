@@ -1,8 +1,9 @@
-from utils import Split
+from utils import Split, batches
 from custom_models import ADBPretrainSoftmaxModel
 
 import numpy as np
 from transformers import AutoTokenizer
+import tensorflow as tf
 from tensorflow.keras import losses, optimizers
 
 
@@ -26,13 +27,19 @@ def create_bert_softmax_embed_f(dataset_train, limit_num_sents):
     model.fit([train_input_ids, train_attention_mask, train_token_type_ids], y_train, epochs=2)
 
     def embed_f(X):
-        encoded_batch = tokenizer(X, padding='max_length', max_length=SEQ_LEN, truncation=True,
-                                  return_attention_mask=True, return_tensors='tf')
-        input_ids = encoded_batch.input_ids
-        attention_mask = encoded_batch.attention_mask
-        token_type_ids = encoded_batch.token_type_ids
+        embeddings_lst = []
 
-        embeddings = model([input_ids, attention_mask, token_type_ids])
+        for batch in batches(X, 32):  # iterate in batches of size 32
+            encoded_batch = tokenizer(batch, padding='max_length', max_length=SEQ_LEN, truncation=True,
+                                      return_attention_mask=True, return_tensors='tf')
+            input_ids = encoded_batch.input_ids
+            attention_mask = encoded_batch.attention_mask
+            token_type_ids = encoded_batch.token_type_ids
+
+            temp_emb = model([input_ids, attention_mask, token_type_ids])
+            embeddings_lst.append(temp_emb)
+
+        embeddings = tf.concat(embeddings_lst, axis=0)
 
         return embeddings
 

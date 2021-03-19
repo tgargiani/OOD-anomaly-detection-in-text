@@ -162,3 +162,8 @@ def euclidean_metric(X, centroids):
     logits = -np.sum((x - centroids) ** 2, axis=2)  # shape (num_embeddings, num_centroids)
 
     return tf.convert_to_tensor(logits)
+
+
+def batches(lst, batch_size):
+    for i in range(0, len(lst), batch_size):
+        yield lst[i:i + batch_size]
