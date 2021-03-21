@@ -1,5 +1,5 @@
 from utils import DS_CLINC150_PATH, USE_DAN_PATH, USE_TRAN_PATH, print_results
-from custom_embeddings import create_bert_softmax_embed_f
+from custom_embeddings import create_bert_embed_f
 from CosineSimilarity import CosineSimilarity
 from NeuralNets import BaselineNN, BaselineNNExtraLayer, CosFaceNN, CosFaceNNExtraLayer, CosFaceLOFNN, ArcFaceNN, \
     ArcFaceNNExtraLayer, AdaptiveDecisionBoundaryNN
@@ -72,8 +72,10 @@ embedding_functions = {}
 embedding_functions['use_dan'] = hub.load(USE_DAN_PATH)
 embedding_functions['use_tran'] = hub.load(USE_TRAN_PATH)
 embedding_functions['sbert'] = SentenceTransformer('stsb-roberta-base').encode
-# embedding_functions['bert_softmax'] = create_bert_softmax_embed_f(dataset['train'],
-#                                                                   LIMIT_NUM_SENTS)  # to be used only with ADB
+# embedding_functions['bert_softmax'] = create_bert_embed_f(dataset['train'],
+#                                                           LIMIT_NUM_SENTS, type='softmax')  # to be used only with ADB
+# embedding_functions['bert_cosface'] = create_bert_embed_f(dataset['train'],
+#                                                           LIMIT_NUM_SENTS, type='cosface')  # to be used only with ADB
 
 for i in imports:
     evaluate = i[0]

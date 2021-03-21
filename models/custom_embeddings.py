@@ -1,5 +1,5 @@
 from utils import Split, batches
-from custom_models import ADBPretrainSoftmaxModel
+from custom_models import ADBPretrainSoftmaxModel, ADBPretrainCosFaceModel
 
 import numpy as np
 from transformers import AutoTokenizer
@@ -7,7 +7,7 @@ import tensorflow as tf
 from tensorflow.keras import losses, optimizers
 
 
-def create_bert_softmax_embed_f(dataset_train, limit_num_sents):
+def create_bert_embed_f(dataset_train, limit_num_sents, type: str):
     SEQ_LEN = 64  # sequence length of BERT
     split = Split(None)  # split without changing to embedding
     X_train, y_train = split.get_X_y(dataset_train, limit_num_sents=limit_num_sents, set_type='train')
@@ -21,10 +21,20 @@ def create_bert_softmax_embed_f(dataset_train, limit_num_sents):
     train_attention_mask = train_encoded_batch.attention_mask
     train_token_type_ids = train_encoded_batch.token_type_ids
 
-    model = ADBPretrainSoftmaxModel(SEQ_LEN, num_classes)
+    if type == 'softmax':
+        model = ADBPretrainSoftmaxModel(SEQ_LEN, num_classes)
+    else:  # cosface
+        model = ADBPretrainCosFaceModel(SEQ_LEN, num_classes)
+
     model.compile(optimizer=optimizers.Adam(learning_rate=2e-5), loss=losses.SparseCategoricalCrossentropy(),
                   metrics=['accuracy'])
-    model.fit([train_input_ids, train_attention_mask, train_token_type_ids], y_train, epochs=2)
+
+    if type == 'softmax':
+        X = [train_input_ids, train_attention_mask, train_token_type_ids]
+    else:  # cosface
+        X = [train_input_ids, train_attention_mask, train_token_type_ids, y_train]
+
+    model.fit(X, y_train, epochs=2)
 
     def embed_f(X):
         embeddings_lst = []

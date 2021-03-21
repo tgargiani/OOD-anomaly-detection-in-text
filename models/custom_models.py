@@ -87,10 +87,48 @@ class ADBPretrainSoftmaxModel(tf.keras.Model):
         x = self.bert({'input_ids': input_ids, 'attention_mask': attention_mask, 'token_type_ids': token_type_ids})
         x = tf.reduce_mean(x.last_hidden_state, axis=1)
         x = self.dense(x)
-        x = self.dropout(x)  # automatically applies only when training is True
-        probs = self.dense2(x)
 
         if training:
+            x = self.dropout(x)
+            probs = self.dense2(x)
+
+            return probs
+
+        return x  # return embeddings
+
+
+class ADBPretrainCosFaceModel(tf.keras.Model):
+    """Adaptive Decision Boundary with CosFace pre-training model."""
+
+    def __init__(self, seq_len, num_classes):
+        super(ADBPretrainCosFaceModel, self).__init__()
+        self.input_ids = layers.Input(shape=(seq_len))
+        self.attention_mask = layers.Input(shape=(seq_len))
+        self.token_type_ids = layers.Input(shape=(seq_len))
+        self.labels = layers.Input(shape=(1))
+
+        self.bert = TFBertModel.from_pretrained('bert-base-uncased')
+        hidden_size = self.bert.config.hidden_size  # 768
+        hidden_dropout_prob = self.bert.config.hidden_dropout_prob  # 0.1
+
+        self.dense = layers.Dense(hidden_size, activation=activations.relu)
+        self.dropout = layers.Dropout(hidden_dropout_prob)
+        self.cosface = CosFace(num_classes=num_classes)
+
+    def call(self, inputs, training=None):
+        if training:
+            input_ids, attention_mask, token_type_ids, labels = inputs
+        else:
+            input_ids, attention_mask, token_type_ids = inputs
+
+        x = self.bert({'input_ids': input_ids, 'attention_mask': attention_mask, 'token_type_ids': token_type_ids})
+        x = tf.reduce_mean(x.last_hidden_state, axis=1)
+        x = self.dense(x)
+
+        if training:
+            x = self.dropout(x)
+            probs = self.cosface([x, labels], training)
+
             return probs
 
         return x  # return embeddings
