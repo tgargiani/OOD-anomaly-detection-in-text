@@ -1,7 +1,7 @@
 from utils import Split, NEEDS_VAL
 from testing import Testing
 
-import time
+import time, psutil
 
 
 def evaluate(dataset, model, model_name, embed_f, limit_num_sents: bool):
@@ -33,6 +33,8 @@ def evaluate(dataset, model, model_name, embed_f, limit_num_sents: bool):
 
     end_time_train = time.time()
 
+    memory = psutil.Process().memory_full_info().uss / (1024 ** 2)  # in megabytes
+
     # TESTING
     start_time_inference = time.time()
 
@@ -51,5 +53,6 @@ def evaluate(dataset, model, model_name, embed_f, limit_num_sents: bool):
 
     results_dct['time_train'] = round(end_time_train - start_time_train, 1)
     results_dct['time_inference'] = round(end_time_inference - start_time_inference, 1)
+    results_dct['memory'] = memory
 
     return results_dct

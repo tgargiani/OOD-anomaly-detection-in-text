@@ -68,7 +68,7 @@ dataset_path = os.path.join(DS_CLINC150_PATH, 'data_full.json')
 with open(dataset_path) as f:
     dataset = json.load(f)
 
-embedding_functions = {}
+embedding_functions = {}  # when measuring memory usage, uncomment them one by one
 embedding_functions['use_dan'] = hub.load(USE_DAN_PATH)
 embedding_functions['use_tran'] = hub.load(USE_TRAN_PATH)
 embedding_functions['sbert'] = SentenceTransformer('stsb-roberta-base').encode
