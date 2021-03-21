@@ -53,6 +53,6 @@ def evaluate(dataset, model, model_name, embed_f, limit_num_sents: bool):
 
     results_dct['time_train'] = round(end_time_train - start_time_train, 1)
     results_dct['time_inference'] = round(end_time_inference - start_time_inference, 1)
-    results_dct['memory'] = memory
+    results_dct['memory'] = round(memory, 1)
 
     return results_dct
