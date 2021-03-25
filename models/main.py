@@ -1,5 +1,5 @@
 from utils import DS_CLINC150_PATH, USE_DAN_PATH, USE_TRAN_PATH, print_results
-from custom_embeddings import create_bert_embed_f
+from custom_embeddings import create_bert_embed_f, create_embed_f
 from CosineSimilarity import CosineSimilarity
 from NeuralNets import BaselineNN, BaselineNNExtraLayer, CosFaceNN, CosFaceNNExtraLayer, CosFaceLOFNN, ArcFaceNN, \
     ArcFaceNNExtraLayer, AdaptiveDecisionBoundaryNN
@@ -58,24 +58,30 @@ imports.append((evaluate, [
 dataset_name = 'clinc150-data_full'
 dataset_path = os.path.join(DS_CLINC150_PATH, 'data_full.json')
 # ------------------------------------------------------------
-# dataset_name = 'clinc150-data_small'
-# dataset_path = os.path.join(DS_CLINC150_PATH, 'data_small.json')
-# ------------------------------------------------------------
-# dataset_name = 'clinc150-binary_undersample'
-# dataset_path = os.path.join(DS_CLINC150_PATH, 'binary_undersample.json')
-# ------------------------------------------------------------
 
 with open(dataset_path) as f:
     dataset = json.load(f)
 
-embedding_functions = {}  # when measuring memory usage, uncomment them one by one
+embedding_functions = {}  # uncomment them one by one when measuring memory usage
 embedding_functions['use_dan'] = hub.load(USE_DAN_PATH)
 embedding_functions['use_tran'] = hub.load(USE_TRAN_PATH)
 embedding_functions['sbert'] = SentenceTransformer('stsb-roberta-base').encode
-# embedding_functions['bert_softmax'] = create_bert_embed_f(dataset['train'],
-#                                                           LIMIT_NUM_SENTS, type='softmax')  # to be used only with ADB
-# embedding_functions['bert_cosface'] = create_bert_embed_f(dataset['train'],
-#                                                           LIMIT_NUM_SENTS, type='cosface')  # to be used only with ADB
+
+# TO BE USED ONLY WITH ADAPTIVE DECISION BOUNDARY:
+# embedding_functions['bert_softmax'] = create_bert_embed_f(dataset['train'], LIMIT_NUM_SENTS, type='softmax')
+# embedding_functions['bert_cosface'] = create_bert_embed_f(dataset['train'], LIMIT_NUM_SENTS, type='cosface')
+#
+# use_dan = hub.load(USE_DAN_PATH)
+# embedding_functions['use_dan_softmax'] = create_embed_f(use_dan, dataset['train'], LIMIT_NUM_SENTS, type='softmax')
+# embedding_functions['use_dan_cosface'] = create_embed_f(use_dan, dataset['train'], LIMIT_NUM_SENTS, type='cosface')
+#
+# use_tran = hub.load(USE_TRAN_PATH)
+# embedding_functions['use_tran_softmax'] = create_embed_f(use_tran, dataset['train'], LIMIT_NUM_SENTS, type='softmax')
+# embedding_functions['use_tran_cosface'] = create_embed_f(use_tran, dataset['train'], LIMIT_NUM_SENTS, type='cosface')
+#
+# sbert = SentenceTransformer('stsb-roberta-base').encode
+# embedding_functions['sbert_softmax'] = create_embed_f(sbert, dataset['train'], LIMIT_NUM_SENTS, type='softmax')
+# embedding_functions['sbert_cosface'] = create_embed_f(sbert, dataset['train'], LIMIT_NUM_SENTS, type='cosface')
 
 for i in imports:
     evaluate = i[0]
