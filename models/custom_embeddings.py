@@ -1,6 +1,6 @@
 from utils import Split, batches
-from custom_models import ADBPretrainBERTSoftmaxModel, ADBPretrainBERTCosFaceModel, ADBPretrainUSESoftmaxModel, \
-    ADBPretrainUSECosFaceModel
+from custom_models import ADBPretrainBERTSoftmaxModel, ADBPretrainBERTCosFaceModel, ADBPretrainSoftmaxModel, \
+    ADBPretrainCosFaceModel
 
 import numpy as np
 from transformers import AutoTokenizer
@@ -69,9 +69,9 @@ def create_embed_f(old_embed_f, dataset_train, limit_num_sents, type: str):
     num_classes = len(set(np.asarray(y_train)))
 
     if type == 'softmax':
-        model = ADBPretrainUSESoftmaxModel(emb_dim, num_classes)
+        model = ADBPretrainSoftmaxModel(emb_dim, num_classes)
     else:  # cosface
-        model = ADBPretrainUSECosFaceModel(emb_dim, num_classes)
+        model = ADBPretrainCosFaceModel(emb_dim, num_classes)
 
     model.compile(optimizer=optimizers.Adam(learning_rate=2e-5), loss=losses.SparseCategoricalCrossentropy(),
                   metrics=['accuracy'])

@@ -135,11 +135,11 @@ class ADBPretrainBERTCosFaceModel(tf.keras.Model):
         return tf.nn.l2_normalize(x, axis=1)  # return normalized embeddings
 
 
-class ADBPretrainUSESoftmaxModel(tf.keras.Model):
-    """Adaptive Decision Boundary with Softmax pre-training model using USE embeddings."""
+class ADBPretrainSoftmaxModel(tf.keras.Model):
+    """Adaptive Decision Boundary with Softmax pre-training model using USE or SBERT embeddings."""
 
     def __init__(self, emb_dim, num_classes):
-        super(ADBPretrainUSESoftmaxModel, self).__init__()
+        super(ADBPretrainSoftmaxModel, self).__init__()
         self.inp = layers.Input(shape=(emb_dim))
 
         self.dense = layers.Dense(emb_dim, activation=activations.relu)
@@ -159,11 +159,11 @@ class ADBPretrainUSESoftmaxModel(tf.keras.Model):
         return tf.nn.l2_normalize(x, axis=1)  # return normalized embeddings
 
 
-class ADBPretrainUSECosFaceModel(tf.keras.Model):
-    """Adaptive Decision Boundary with CosFace pre-training model using USE embeddings."""
+class ADBPretrainCosFaceModel(tf.keras.Model):
+    """Adaptive Decision Boundary with CosFace pre-training model using USE or SBERT embeddings."""
 
     def __init__(self, emb_dim, num_classes):
-        super(ADBPretrainUSECosFaceModel, self).__init__()
+        super(ADBPretrainCosFaceModel, self).__init__()
         self.inp = layers.Input(shape=(emb_dim))
         self.labels = layers.Input(shape=(1))
 
