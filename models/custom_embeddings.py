@@ -1,11 +1,12 @@
 from utils import Split, batches
-from custom_models import ADBPretrainBERTSoftmaxModel, ADBPretrainBERTCosFaceModel, ADBPretrainSoftmaxModel, \
-    ADBPretrainCosFaceModel
+from custom_models import ADBPretrainBERTSoftmaxModel, ADBPretrainBERTCosFaceModel, ADBPretrainBERTTripletLossModel, \
+    ADBPretrainSoftmaxModel, ADBPretrainCosFaceModel, ADBPretrainTripletLossModel
 
 import numpy as np
 from transformers import AutoTokenizer
 import tensorflow as tf
 from tensorflow.keras import losses, optimizers
+import tensorflow_addons as tfa
 
 
 def create_bert_embed_f(dataset_train, limit_num_sents, type: str):
@@ -26,18 +27,28 @@ def create_bert_embed_f(dataset_train, limit_num_sents, type: str):
 
     if type == 'softmax':
         model = ADBPretrainBERTSoftmaxModel(SEQ_LEN, num_classes)
-    else:  # cosface
+    elif type == 'cosface':
         model = ADBPretrainBERTCosFaceModel(SEQ_LEN, num_classes)
+    else:  # triplet_loss
+        model = ADBPretrainBERTTripletLossModel(SEQ_LEN)
 
-    model.compile(optimizer=optimizers.Adam(learning_rate=2e-5), loss=losses.SparseCategoricalCrossentropy(),
-                  metrics=['accuracy'])
+    if type in ['softmax', 'cosface']:
+        loss = losses.SparseCategoricalCrossentropy()
+        shuffle = True  # default
+        batch_size = None  # defaults to 32
+    else:  # triplet_loss
+        loss = tfa.losses.TripletSemiHardLoss()
+        shuffle = True  # shuffle before every epoch in order to guarantee diversity in pos and neg samples
+        batch_size = 256  # same as above
 
-    if type == 'softmax':
+    model.compile(optimizer=optimizers.Adam(learning_rate=2e-5), loss=loss, metrics=['accuracy'])
+
+    if type in ['softmax', 'triplet_loss']:
         X = [train_input_ids, train_attention_mask, train_token_type_ids]
     else:  # cosface
         X = [train_input_ids, train_attention_mask, train_token_type_ids, y_train]
 
-    model.fit(X, y_train, epochs=2)
+    model.fit(X, y_train, epochs=2, shuffle=shuffle, batch_size=batch_size)
 
     def embed_f(X):
         embeddings_lst = []
@@ -70,18 +81,28 @@ def create_embed_f(old_embed_f, dataset_train, limit_num_sents, type: str):
 
     if type == 'softmax':
         model = ADBPretrainSoftmaxModel(emb_dim, num_classes)
-    else:  # cosface
+    elif type == 'cosface':
         model = ADBPretrainCosFaceModel(emb_dim, num_classes)
+    else:  # triplet_loss
+        model = ADBPretrainTripletLossModel(emb_dim)
 
-    model.compile(optimizer=optimizers.Adam(learning_rate=2e-5), loss=losses.SparseCategoricalCrossentropy(),
-                  metrics=['accuracy'])
+    if type in ['softmax', 'cosface']:
+        loss = losses.SparseCategoricalCrossentropy()
+        shuffle = True  # default
+        batch_size = None  # defaults to 32
+    else:  # triplet_loss
+        loss = tfa.losses.TripletSemiHardLoss()
+        shuffle = True  # shuffle before every epoch in order to guarantee diversity in pos and neg samples
+        batch_size = 256  # same as above
 
-    if type == 'softmax':
+    model.compile(optimizer=optimizers.Adam(learning_rate=2e-5), loss=loss, metrics=['accuracy'])
+
+    if type in ['softmax', 'triplet_loss']:
         X = X_train
     else:  # cosface
         X = [X_train, y_train]
 
-    model.fit(X, y_train, epochs=40)
+    model.fit(X, y_train, epochs=40, shuffle=shuffle, batch_size=batch_size)
 
     def embed_f(X):
         embeddings_lst = []

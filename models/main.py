@@ -70,18 +70,25 @@ embedding_functions['sbert'] = SentenceTransformer('stsb-roberta-base').encode
 # TO BE USED ONLY WITH ADAPTIVE DECISION BOUNDARY:
 # embedding_functions['bert_softmax'] = create_bert_embed_f(dataset['train'], LIMIT_NUM_SENTS, type='softmax')
 # embedding_functions['bert_cosface'] = create_bert_embed_f(dataset['train'], LIMIT_NUM_SENTS, type='cosface')
+# embedding_functions['bert_triplet_loss'] = create_bert_embed_f(dataset['train'], LIMIT_NUM_SENTS, type='triplet_loss')
 #
 # use_dan = hub.load(USE_DAN_PATH)
 # embedding_functions['use_dan_softmax'] = create_embed_f(use_dan, dataset['train'], LIMIT_NUM_SENTS, type='softmax')
 # embedding_functions['use_dan_cosface'] = create_embed_f(use_dan, dataset['train'], LIMIT_NUM_SENTS, type='cosface')
+# embedding_functions['use_dan_triplet_loss'] = create_embed_f(use_dan, dataset['train'], LIMIT_NUM_SENTS,
+#                                                              type='triplet_loss')
 #
 # use_tran = hub.load(USE_TRAN_PATH)
 # embedding_functions['use_tran_softmax'] = create_embed_f(use_tran, dataset['train'], LIMIT_NUM_SENTS, type='softmax')
 # embedding_functions['use_tran_cosface'] = create_embed_f(use_tran, dataset['train'], LIMIT_NUM_SENTS, type='cosface')
+# embedding_functions['use_tran_triplet_loss'] = create_embed_f(use_tran, dataset['train'], LIMIT_NUM_SENTS,
+#                                                               type='triplet_loss')
 #
 # sbert = SentenceTransformer('stsb-roberta-base').encode
 # embedding_functions['sbert_softmax'] = create_embed_f(sbert, dataset['train'], LIMIT_NUM_SENTS, type='softmax')
 # embedding_functions['sbert_cosface'] = create_embed_f(sbert, dataset['train'], LIMIT_NUM_SENTS, type='cosface')
+# embedding_functions['sbert_triplet_loss'] = create_embed_f(sbert, dataset['train'], LIMIT_NUM_SENTS,
+#                                                            type='triplet_loss')
 
 for i in imports:
     evaluate = i[0]

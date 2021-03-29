@@ -135,6 +135,30 @@ class ADBPretrainBERTCosFaceModel(tf.keras.Model):
         return tf.nn.l2_normalize(x, axis=1)  # return normalized embeddings
 
 
+class ADBPretrainBERTTripletLossModel(tf.keras.Model):
+    """Adaptive Decision Boundary with Triplet Loss pre-training model using BERT embeddings."""
+
+    def __init__(self, seq_len):
+        super(ADBPretrainBERTTripletLossModel, self).__init__()
+        self.input_ids = layers.Input(shape=(seq_len))
+        self.attention_mask = layers.Input(shape=(seq_len))
+        self.token_type_ids = layers.Input(shape=(seq_len))
+
+        self.bert = TFBertModel.from_pretrained('bert-base-uncased')
+        hidden_size = self.bert.config.hidden_size  # 768
+
+        self.dense = layers.Dense(hidden_size, activation=None)
+
+    def call(self, inputs, training=None):
+        input_ids, attention_mask, token_type_ids = inputs
+
+        x = self.bert({'input_ids': input_ids, 'attention_mask': attention_mask, 'token_type_ids': token_type_ids})
+        x = tf.reduce_mean(x.last_hidden_state, axis=1)
+        x = self.dense(x)
+
+        return tf.nn.l2_normalize(x, axis=1)  # return normalized embeddings
+
+
 class ADBPretrainSoftmaxModel(tf.keras.Model):
     """Adaptive Decision Boundary with Softmax pre-training model using USE or SBERT embeddings."""
 
@@ -188,5 +212,19 @@ class ADBPretrainCosFaceModel(tf.keras.Model):
             probs = self.cosface([x, labels], training)
 
             return probs
+
+        return tf.nn.l2_normalize(x, axis=1)  # return normalized embeddings
+
+
+class ADBPretrainTripletLossModel(tf.keras.Model):
+    """Adaptive Decision Boundary with Triplet Loss pre-training model using USE or SBERT embeddings."""
+
+    def __init__(self, emb_dim):
+        super(ADBPretrainTripletLossModel, self).__init__()
+        self.inp = layers.Input(shape=(emb_dim))
+        self.dense = layers.Dense(emb_dim, activation=None)
+
+    def call(self, inputs, training=None):
+        x = self.dense(inputs)
 
         return tf.nn.l2_normalize(x, axis=1)  # return normalized embeddings
