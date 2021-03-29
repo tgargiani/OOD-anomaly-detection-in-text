@@ -39,7 +39,7 @@ def create_bert_embed_f(dataset_train, limit_num_sents, type: str):
     else:  # triplet_loss
         loss = tfa.losses.TripletSemiHardLoss()
         shuffle = True  # shuffle before every epoch in order to guarantee diversity in pos and neg samples
-        batch_size = 256  # same as above
+        batch_size = 64  # same as above; larger batch size results in OOM error
 
     model.compile(optimizer=optimizers.Adam(learning_rate=2e-5), loss=loss, metrics=['accuracy'])
 
