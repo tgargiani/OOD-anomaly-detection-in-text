@@ -155,10 +155,11 @@ class AdaptiveDecisionBoundary(layers.Layer):
     Inspiration: https://stackoverflow.com/questions/64223840/use-additional-trainable-variables-in-keras-tensorflow-custom-loss-function.
     """
 
-    def __init__(self, num_classes, centroids):
+    def __init__(self, num_classes, centroids, dist_type):
         super().__init__()
         self.delta = tf.Variable(tf.random.normal([num_classes]), trainable=True)
         self.centroids = tf.Variable(centroids, trainable=False, dtype=tf.float32)
+        self.dist_type = dist_type
 
     def custom_loss(self, embeddings, labels):
         labels = tf.cast(labels, dtype=tf.int32)  # TF has automatically casted to tf.float32, revert back
@@ -169,7 +170,21 @@ class AdaptiveDecisionBoundary(layers.Layer):
         c = tf.gather(self.centroids, labels)
         d = tf.gather(soft_delta, labels)
 
-        distance = tf.norm(embeddings - c, ord='euclidean', axis=2)  # extra batch dimension -> axis=2 (instead of 1)
+        if self.dist_type == 'euclidean':
+            distance = tf.norm(embeddings - c, ord='euclidean',
+                               axis=2)  # extra batch dimension -> axis=2 (instead of 1)
+        else:
+            embeddings_norm = tf.nn.l2_normalize(embeddings, axis=1)
+            c = tf.squeeze(c)
+            c_norm = tf.nn.l2_normalize(c, axis=1)
+            cos_sim = tf.matmul(embeddings_norm, tf.transpose(c_norm))
+
+            if self.dist_type == 'cosine':
+                distance = 1 - cos_sim
+            else:  # angular
+                distance = tf.math.acos(cos_sim) / math.pi
+
+            distance = tf.linalg.diag_part(distance)
 
         pos_mask = tf.cast([distance >= d], dtype=tf.float32)
         neg_mask = tf.cast([distance < d], dtype=tf.float32)

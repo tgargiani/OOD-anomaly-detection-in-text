@@ -1,11 +1,12 @@
 from AbstractNeuralNet import AbstractNeuralNet
 from custom_models import CosFaceModel, ArcFaceModel
 from custom_layers import AdaptiveDecisionBoundary
-from utils import EXTRA_LAYER_ACT_F, compute_centroids, euclidean_metric
+from utils import EXTRA_LAYER_ACT_F, compute_centroids, distance_metric
 
 import tensorflow as tf
 from tensorflow.keras import layers, activations
 import numpy as np
+import math
 
 
 class BaselineNN(AbstractNeuralNet):
@@ -98,7 +99,7 @@ class AdaptiveDecisionBoundaryNN:
     Based on https://arxiv.org/pdf/2012.10209.pdf.
     """
 
-    def __init__(self):
+    def __init__(self, dist_type: str):
         tf.random.set_seed(7)  # set seed in order to have reproducible results
 
         self.model = None
@@ -106,6 +107,7 @@ class AdaptiveDecisionBoundaryNN:
         self.delta = None
         self.centroids = None
         self.oos_label = None
+        self.dist_type = dist_type  # euclidean, cosine or angular
 
     def fit(self, X_train, y_train):
         num_embeddings, emb_dim = X_train.shape  # number of embeddings, embedding dimension
@@ -114,7 +116,7 @@ class AdaptiveDecisionBoundaryNN:
 
         embedding_input = layers.Input(shape=(emb_dim))
         label_input = layers.Input(shape=(1))
-        loss = AdaptiveDecisionBoundary(num_classes, self.centroids)((embedding_input, label_input))
+        loss = AdaptiveDecisionBoundary(num_classes, self.centroids, self.dist_type)((embedding_input, label_input))
         self.model = tf.keras.Model(inputs=[embedding_input, label_input], outputs=loss)
 
         self.model.compile(optimizer=tf.keras.optimizers.Adam(learning_rate=0.01), loss=None)
@@ -122,15 +124,31 @@ class AdaptiveDecisionBoundaryNN:
 
         self.delta = self.model.layers[-1].delta
 
+        if self.dist_type in ['cosine', 'angular']:  # TODO: always apply softplus, unrealiable results otherwise
+            # according to the original paper, this should be done always, but on euclidean it worsens the results
+            self.delta = activations.softplus(self.delta)
+
     def predict(self, X_test):
-        logits = euclidean_metric(X_test, self.centroids)
-        probs = tf.nn.softmax(logits)
-        predictions = tf.math.argmax(probs, axis=1)
+        logits = distance_metric(X_test, self.centroids, self.dist_type)
+        predictions = tf.math.argmin(logits, axis=1)
 
         c = tf.gather(self.centroids, predictions)
         d = tf.gather(self.delta, predictions)
 
-        distance = tf.norm(X_test - c, ord='euclidean', axis=1)
+        if self.dist_type == 'euclidean':
+            distance = tf.norm(X_test - c, ord='euclidean', axis=1)
+        else:
+            X_test_norm = tf.nn.l2_normalize(X_test, axis=1)
+            c_norm = tf.nn.l2_normalize(c, axis=1)
+            cos_sim = tf.matmul(X_test_norm, tf.transpose(c_norm))
+
+            if self.dist_type == 'cosine':
+                distance = 1 - cos_sim
+            else:  # angular
+                distance = tf.math.acos(cos_sim) / math.pi
+
+            distance = tf.linalg.diag_part(distance)
+
         predictions = np.where(distance < d, predictions, self.oos_label)
 
         return predictions

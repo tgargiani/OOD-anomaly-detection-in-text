@@ -1,6 +1,7 @@
 import os, random
 import tensorflow as tf
 import numpy as np
+import math
 
 EMB_PATH = os.path.join(os.path.dirname(__file__), '..', 'embeddings')
 DS_PATH = os.path.join(os.path.dirname(__file__), '..', 'datasets')
@@ -148,18 +149,28 @@ def compute_centroids(X, y):
     return tf.convert_to_tensor(centroids, dtype=tf.float32)
 
 
-def euclidean_metric(X, centroids):
+def distance_metric(X, centroids, dist_type):
     X = np.asarray(X)
     centroids = np.asarray(centroids)
 
     num_embeddings = X.shape[0]
     num_centroids = centroids.shape[0]  # equivalent to num_classes
 
-    # modify arrays to shape (num_embeddings, num_centroids, emb_dim) in order to compare them
-    x = np.repeat(X[:, np.newaxis, :], repeats=num_centroids, axis=1)
-    centroids = np.repeat(centroids[np.newaxis, :, :], repeats=num_embeddings, axis=0)
+    if dist_type == 'euclidean':
+        # modify arrays to shape (num_embeddings, num_centroids, emb_dim) in order to compare them
+        x = np.repeat(X[:, np.newaxis, :], repeats=num_centroids, axis=1)
+        centroids = np.repeat(centroids[np.newaxis, :, :], repeats=num_embeddings, axis=0)
 
-    logits = -np.sum((x - centroids) ** 2, axis=2)  # shape (num_embeddings, num_centroids)
+        logits = tf.norm(x - centroids, ord='euclidean', axis=2)
+    else:
+        x_norm = tf.nn.l2_normalize(X, axis=1)
+        centroids_norm = tf.nn.l2_normalize(centroids, axis=1)
+        cos_sim = tf.matmul(x_norm, tf.transpose(centroids_norm))
+
+        if dist_type == 'cosine':
+            logits = 1 - cos_sim
+        else:  # angular
+            logits = tf.math.acos(cos_sim) / math.pi
 
     return tf.convert_to_tensor(logits)
 

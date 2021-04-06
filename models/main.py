@@ -17,7 +17,9 @@ imports = []
 from ood_train import evaluate
 
 imports.append((evaluate, [
-    AdaptiveDecisionBoundaryNN(),
+    AdaptiveDecisionBoundaryNN('angular'),
+    AdaptiveDecisionBoundaryNN('cosine'),
+    AdaptiveDecisionBoundaryNN('euclidean'),
     ArcFaceNN(),
     ArcFaceNNExtraLayer(),
     CosFaceLOFNN(),
