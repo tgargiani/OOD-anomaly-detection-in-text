@@ -2,6 +2,7 @@ import os, random
 import tensorflow as tf
 import numpy as np
 import math
+import matplotlib.pyplot as plt
 
 EMB_PATH = os.path.join(os.path.dirname(__file__), '..', 'embeddings')
 DS_PATH = os.path.join(os.path.dirname(__file__), '..', 'datasets')
@@ -178,3 +179,21 @@ def distance_metric(X, centroids, dist_type):
 def batches(lst, batch_size):
     for i in range(0, len(lst), batch_size):
         yield lst[i:i + batch_size]
+
+
+def visualize_2d_data(X, y, title, centroids=None, delta=None, save=False):
+    fig, ax = plt.subplots(figsize=(6, 6))
+
+    plt.title(title)
+    ax.scatter(X[:, 0], X[:, 1], c=y)
+
+    if (centroids is not None) and (delta is not None):
+        for c, d in zip(centroids, delta):
+            circle = plt.Circle(c, d, color='r', fill=False)
+            ax.set_aspect('equal', adjustable='datalim')
+            ax.add_patch(circle)
+
+    if save:
+        plt.savefig(f'{title}.pdf')
+    else:
+        plt.show()

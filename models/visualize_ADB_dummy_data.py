@@ -1,27 +1,12 @@
 from custom_models import ADBPretrainSoftmaxModel, ADBPretrainCosFaceModel, ADBPretrainTripletLossModel
-from utils import batches
+from utils import batches, visualize_2d_data
 
 from NeuralNets import AdaptiveDecisionBoundaryNN
 from sklearn.datasets import make_blobs, make_classification
-import matplotlib.pyplot as plt
 import tensorflow as tf
 import tensorflow_addons as tfa
 from tensorflow import optimizers, losses
 import numpy as np
-
-
-def visualize_data(X, y, title, centroids=None, delta=None):
-    fig, ax = plt.subplots(figsize=(6, 6))
-    plt.title(title)
-    ax.scatter(X[:, 0], X[:, 1], c=y)
-
-    if (centroids is not None) and (delta is not None):
-        for c, d in zip(centroids, delta):
-            circle = plt.Circle(c, d, color='r', fill=False)
-            ax.set_aspect('equal', adjustable='datalim')
-            ax.add_patch(circle)
-
-    plt.show()
 
 
 def embed_f(X, pretraining_model):
@@ -54,7 +39,7 @@ if __name__ == '__main__':
     y_train = np.concatenate((Y1, Y2), axis=0)
 
     # Visualize data
-    visualize_data(X_train, y_train, f'Points - {type}')
+    visualize_2d_data(X_train, y_train, f'Points - {type}')
 
     # Train pre-training model
     if type == 'softmax':
@@ -90,6 +75,7 @@ if __name__ == '__main__':
 
     centroids = model.centroids
     delta = tf.convert_to_tensor(model.delta)
-    visualize_data(X_train_pretr, y_train, f'Points after pre-training and radius - {type} - {adb_distance} distance',
-                   centroids=centroids,
-                   delta=delta)
+    visualize_2d_data(X_train_pretr, y_train,
+                      f'Points after pre-training and radius - {type} - {adb_distance} distance',
+                      centroids=centroids,
+                      delta=delta)

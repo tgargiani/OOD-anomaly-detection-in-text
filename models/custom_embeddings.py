@@ -1,4 +1,4 @@
-from utils import Split, batches
+from utils import Split, batches, visualize_2d_data
 from custom_models import ADBPretrainBERTSoftmaxModel, ADBPretrainBERTCosFaceModel, ADBPretrainBERTTripletLossModel, \
     ADBPretrainSoftmaxModel, ADBPretrainCosFaceModel, ADBPretrainTripletLossModel
 
@@ -7,6 +7,7 @@ from transformers import AutoTokenizer
 import tensorflow as tf
 from tensorflow.keras import losses, optimizers
 import tensorflow_addons as tfa
+from sklearn.decomposition import PCA
 
 
 def create_bert_embed_f(dataset_train, limit_num_sents, type: str):
@@ -70,7 +71,7 @@ def create_bert_embed_f(dataset_train, limit_num_sents, type: str):
     return embed_f
 
 
-def create_embed_f(old_embed_f, dataset_train, limit_num_sents, type: str):
+def create_embed_f(old_embed_f, dataset_train, limit_num_sents, type: str, visualize=False):
     """Fine-tunes embeddings from USE or SBERT (using their embedding function). Returns new embed function."""
 
     split = Split(old_embed_f)
@@ -103,6 +104,25 @@ def create_embed_f(old_embed_f, dataset_train, limit_num_sents, type: str):
         X = [X_train, y_train]
 
     model.fit(X, y_train, epochs=40, shuffle=shuffle, batch_size=batch_size)
+
+    if visualize:
+        pca = PCA(n_components=2)
+
+        # visualize original embeddings
+        X_train_pca = pca.fit_transform(X_train)
+        visualize_2d_data(X_train_pca, y_train, title=f'Embeddings')
+
+        # visualize embeddings after pre-training
+        embeddings_lst = []
+        for batch in batches(X_train, 32):
+            temp_emb = model(batch)
+            embeddings_lst.append(temp_emb)
+
+        embeddings = tf.concat(embeddings_lst, axis=0)
+
+        embeddings_pca = pca.fit_transform(embeddings)
+        visualize_2d_data(embeddings_pca, y_train,
+                          title=f'Embeddings after pre-training with {type}')
 
     def embed_f(X):
         embeddings_lst = []
