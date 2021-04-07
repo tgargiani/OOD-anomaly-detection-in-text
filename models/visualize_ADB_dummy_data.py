@@ -38,7 +38,7 @@ def embed_f(X, pretraining_model):
 
 if __name__ == '__main__':
     emb_dim = 2
-    num_classes = 3
+    num_classes = 2
     type = 'triplet_loss'  # softmax, cosface or triplet_loss
 
     # Create 2D dummy train data
@@ -46,8 +46,10 @@ if __name__ == '__main__':
     # X_train, y_train = make_blobs(n_samples=500, n_features=emb_dim, centers=num_classes, cluster_std=2.5)
 
     # Petr
-    X1, Y1 = make_classification(n_classes=2, n_features=2, n_redundant=0, n_informative=2, n_clusters_per_class=2)
-    X2, Y2 = make_classification(n_classes=2, n_features=2, n_redundant=0, n_informative=2, n_clusters_per_class=2)
+    X1, Y1 = make_classification(n_classes=num_classes, n_features=emb_dim, n_redundant=0, n_informative=emb_dim,
+                                 n_clusters_per_class=2)
+    X2, Y2 = make_classification(n_classes=num_classes, n_features=emb_dim, n_redundant=0, n_informative=emb_dim,
+                                 n_clusters_per_class=2)
     X_train = np.concatenate((X1, X2), axis=0)
     y_train = np.concatenate((Y1, Y2), axis=0)
 
