@@ -24,6 +24,9 @@ def embed_f(X, pretraining_model):
 
 
 if __name__ == '__main__':
+    # tf.random.set_seed(7)
+    # np.random.seed(7)
+
     emb_dim = 2
     num_classes = 2
     type = 'triplet_loss'  # softmax, cosface or triplet_loss

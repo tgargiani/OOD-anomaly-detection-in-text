@@ -123,10 +123,7 @@ class AdaptiveDecisionBoundaryNN:
         self.model.fit([X_train, y_train], None, epochs=10)
 
         self.delta = self.model.layers[-1].delta
-
-        if self.dist_type in ['cosine', 'angular']:  # TODO: always apply softplus, unrealiable results otherwise
-            # according to the original paper, this should be done always, but on euclidean it worsens the results
-            self.delta = activations.softplus(self.delta)
+        self.delta = activations.softplus(self.delta)
 
     def predict(self, X_test):
         logits = distance_metric(X_test, self.centroids, self.dist_type)
