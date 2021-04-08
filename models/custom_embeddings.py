@@ -121,11 +121,12 @@ def create_embed_f(old_embed_f, dataset_train, limit_num_sents, type: str, visua
             for c in range(num_classes):
                 X_selection = np.stack(Xy[:, 0][Xy[:, 1] == c][idx:to_idx])
                 y_selection = np.stack(Xy[:, 1][Xy[:, 1] == c][idx:to_idx])
+                num_selected = len(y_selection)
 
-                X_train[idx:to_idx, :] = X_selection
-                y_train[idx:to_idx] = y_selection
+                X_train[num_seen_samples:num_seen_samples + num_selected, :] = X_selection
+                y_train[num_seen_samples:num_seen_samples + num_selected] = y_selection
 
-                num_seen_samples += len(y_selection)
+                num_seen_samples += num_selected
 
             idx = to_idx
 

@@ -7,6 +7,8 @@ import tensorflow as tf
 import tensorflow_addons as tfa
 from tensorflow import optimizers, losses
 import numpy as np
+import sklearn
+import math
 
 
 def embed_f(X, pretraining_model):
@@ -55,8 +57,43 @@ if __name__ == '__main__':
         batch_size = None  # defaults to 32
     else:  # triplet_loss
         loss = tfa.losses.TripletSemiHardLoss()
-        shuffle = True  # shuffle before every epoch in order to guarantee diversity in pos and neg samples
-        batch_size = 256  # same as above
+        # shuffle = True  # shuffle before every epoch in order to guarantee diversity in pos and neg samples
+        # batch_size = 256  # same as above
+
+        shuffle = False  # shuffle manually
+        batch_size = 300
+        num_samples = X_train.shape[0]
+        num_samples_to_select = math.ceil(batch_size / num_classes)
+        idx = 0
+        num_seen_samples = 0
+
+        # create custom batches - each batch should contain at least one random embedding per class
+        X, y = np.asarray(X_train), np.asarray(y_train)
+        X, y = sklearn.utils.shuffle(X, y)
+        Xy = list(zip(X, y))
+        Xy = sorted(Xy, key=lambda x: x[1])
+        Xy = np.asarray(Xy)
+
+        X_train = np.empty(shape=X_train.shape)
+        y_train = np.empty(shape=y_train.shape)
+
+        while num_seen_samples < num_samples:
+            to_idx = idx + num_samples_to_select
+
+            for c in range(num_classes):
+                X_selection = np.stack(Xy[:, 0][Xy[:, 1] == c][idx:to_idx])
+                y_selection = np.stack(Xy[:, 1][Xy[:, 1] == c][idx:to_idx])
+                num_selected = len(y_selection)
+
+                X_train[num_seen_samples:num_seen_samples + num_selected, :] = X_selection
+                y_train[num_seen_samples:num_seen_samples + num_selected] = y_selection
+
+                num_seen_samples += num_selected
+
+            idx = to_idx
+
+        X_train = tf.convert_to_tensor(X_train)
+        y_train = tf.convert_to_tensor(y_train)
 
     pretraining_model.compile(optimizer=optimizers.Adam(learning_rate=2e-5), loss=loss, metrics=['accuracy'])
 
