@@ -7,7 +7,9 @@ from transformers import AutoTokenizer
 import tensorflow as tf
 from tensorflow.keras import losses, optimizers
 import tensorflow_addons as tfa
+import sklearn
 from sklearn.decomposition import PCA
+import math
 
 
 def create_bert_embed_f(dataset_train, limit_num_sents, type: str):
@@ -93,8 +95,42 @@ def create_embed_f(old_embed_f, dataset_train, limit_num_sents, type: str, visua
         batch_size = None  # defaults to 32
     else:  # triplet_loss
         loss = tfa.losses.TripletSemiHardLoss()
-        shuffle = True  # shuffle before every epoch in order to guarantee diversity in pos and neg samples
-        batch_size = 256  # same as above
+        # shuffle = True  # shuffle before every epoch in order to guarantee diversity in pos and neg samples
+        # batch_size = 256  # same as above
+
+        shuffle = False  # shuffle manually
+        batch_size = 300
+        num_samples = X_train.shape[0]
+        num_samples_to_select = math.ceil(batch_size / num_classes)
+        idx = 0
+        num_seen_samples = 0
+
+        # create custom batches - each batch should contain at least one random embedding per class
+        X, y = np.asarray(X_train), np.asarray(y_train)
+        X, y = sklearn.utils.shuffle(X, y)
+        Xy = list(zip(X, y))
+        Xy = sorted(Xy, key=lambda x: x[1])
+        Xy = np.asarray(Xy)
+
+        X_train = np.empty(shape=X_train.shape)
+        y_train = np.empty(shape=y_train.shape)
+
+        while num_seen_samples < num_samples:
+            to_idx = idx + num_samples_to_select
+
+            for c in range(num_classes):
+                X_selection = np.stack(Xy[:, 0][Xy[:, 1] == c][idx:to_idx])
+                y_selection = np.stack(Xy[:, 1][Xy[:, 1] == c][idx:to_idx])
+
+                X_train[idx:to_idx, :] = X_selection
+                y_train[idx:to_idx] = y_selection
+
+                num_seen_samples += len(y_selection)
+
+            idx = to_idx
+
+        X_train = tf.convert_to_tensor(X_train)
+        y_train = tf.convert_to_tensor(y_train)
 
     model.compile(optimizer=optimizers.Adam(learning_rate=2e-5), loss=loss, metrics=['accuracy'])
 
@@ -121,8 +157,7 @@ def create_embed_f(old_embed_f, dataset_train, limit_num_sents, type: str, visua
         embeddings = tf.concat(embeddings_lst, axis=0)
 
         embeddings_pca = pca.fit_transform(embeddings)
-        visualize_2d_data(embeddings_pca, y_train,
-                          title=f'Embeddings after pre-training with {type}')
+        visualize_2d_data(embeddings_pca, y_train, title=f'Embeddings after pre-training with {type}')
 
     def embed_f(X):
         embeddings_lst = []
