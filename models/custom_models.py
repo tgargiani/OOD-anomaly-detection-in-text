@@ -222,9 +222,21 @@ class ADBPretrainTripletLossModel(tf.keras.Model):
     def __init__(self, emb_dim):
         super(ADBPretrainTripletLossModel, self).__init__()
         self.inp = layers.Input(shape=(emb_dim))
-        self.dense = layers.Dense(emb_dim, activation=None)
+        self.dense = layers.Dense(emb_dim, activation=activations.relu)
+        self.dropout = layers.Dropout(0.1)
+        self.dense2 = layers.Dense(emb_dim, activation=activations.relu)
+        self.dense3 = layers.Dense(emb_dim, activation=activations.relu)
+        self.dense4 = layers.Dense(emb_dim, activation=None)
 
     def call(self, inputs, training=None):
         x = self.dense(inputs)
+        x = self.dropout(x)
+        x = self.dense2(x)
+        x = self.dropout(x)
+        x = self.dense3(x)
+
+        if training:
+            x = self.dropout(x)
+            x = self.dense4(x)
 
         return tf.nn.l2_normalize(x, axis=1)  # return normalized embeddings
