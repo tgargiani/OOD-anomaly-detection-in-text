@@ -102,7 +102,7 @@ def create_embed_f(old_embed_f, dataset_train, limit_num_sents, type: str, visua
         batch_size = 300
 
         if os.path.isfile(f'{emb_name}_pretrain_triplet_loss.pickle'):
-            with open('train.pickle', 'rb') as f:
+            with open(f'{emb_name}_pretrain_triplet_loss.pickle', 'rb') as f:
                 X_train, y_train = pickle.load(f)
         else:
             # computationally expensive
