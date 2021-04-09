@@ -3,6 +3,7 @@ import tensorflow as tf
 import numpy as np
 import math
 import matplotlib.pyplot as plt
+import sklearn
 
 EMB_PATH = os.path.join(os.path.dirname(__file__), '..', 'embeddings')
 DS_PATH = os.path.join(os.path.dirname(__file__), '..', 'datasets')
@@ -197,3 +198,41 @@ def visualize_2d_data(X, y, title, centroids=None, delta=None, save=False):
         plt.savefig(f'{title}.pdf')
     else:
         plt.show()
+
+
+def prepare_for_custom_triplet_loss_batches(X_train, y_train, batch_size, num_classes):
+    """Reorders data so that each batch contains at least one random embedding per class."""
+
+    num_samples = X_train.shape[0]
+    num_samples_to_select = math.ceil(batch_size / num_classes)
+    idx = 0
+    num_seen_samples = 0
+
+    X, y = np.asarray(X_train), np.asarray(y_train)
+    X, y = sklearn.utils.shuffle(X, y)
+    Xy = list(zip(X, y))
+    Xy = sorted(Xy, key=lambda x: x[1])
+    Xy = np.asarray(Xy)
+
+    X_train = np.empty(shape=X_train.shape)
+    y_train = np.empty(shape=y_train.shape)
+
+    while num_seen_samples < num_samples:
+        to_idx = idx + num_samples_to_select
+
+        for c in range(num_classes):
+            X_selection = np.stack(Xy[:, 0][Xy[:, 1] == c][idx:to_idx])
+            y_selection = np.stack(Xy[:, 1][Xy[:, 1] == c][idx:to_idx])
+            num_selected = len(y_selection)
+
+            X_train[num_seen_samples:num_seen_samples + num_selected, :] = X_selection
+            y_train[num_seen_samples:num_seen_samples + num_selected] = y_selection
+
+            num_seen_samples += num_selected
+
+        idx = to_idx
+
+    X_train = tf.convert_to_tensor(X_train)
+    y_train = tf.convert_to_tensor(y_train)
+
+    return X_train, y_train

@@ -1,4 +1,4 @@
-from utils import Split, batches, visualize_2d_data
+from utils import Split, batches, visualize_2d_data, prepare_for_custom_triplet_loss_batches
 from custom_models import ADBPretrainBERTSoftmaxModel, ADBPretrainBERTCosFaceModel, ADBPretrainBERTTripletLossModel, \
     ADBPretrainSoftmaxModel, ADBPretrainCosFaceModel, ADBPretrainTripletLossModel
 
@@ -7,9 +7,9 @@ from transformers import AutoTokenizer
 import tensorflow as tf
 from tensorflow.keras import losses, optimizers
 import tensorflow_addons as tfa
-import sklearn
 from sklearn.decomposition import PCA
-import math
+import pickle
+import os
 
 
 def create_bert_embed_f(dataset_train, limit_num_sents, type: str):
@@ -73,7 +73,7 @@ def create_bert_embed_f(dataset_train, limit_num_sents, type: str):
     return embed_f
 
 
-def create_embed_f(old_embed_f, dataset_train, limit_num_sents, type: str, visualize=False):
+def create_embed_f(old_embed_f, dataset_train, limit_num_sents, type: str, visualize=False, emb_name=None):
     """Fine-tunes embeddings from USE or SBERT (using their embedding function). Returns new embed function."""
 
     split = Split(old_embed_f)
@@ -100,38 +100,16 @@ def create_embed_f(old_embed_f, dataset_train, limit_num_sents, type: str, visua
 
         shuffle = False  # shuffle manually
         batch_size = 300
-        num_samples = X_train.shape[0]
-        num_samples_to_select = math.ceil(batch_size / num_classes)
-        idx = 0
-        num_seen_samples = 0
 
-        # create custom batches - each batch should contain at least one random embedding per class
-        X, y = np.asarray(X_train), np.asarray(y_train)
-        X, y = sklearn.utils.shuffle(X, y)
-        Xy = list(zip(X, y))
-        Xy = sorted(Xy, key=lambda x: x[1])
-        Xy = np.asarray(Xy)
+        if os.path.isfile(f'{emb_name}_pretrain_triplet_loss.pickle'):
+            with open('train.pickle', 'rb') as f:
+                X_train, y_train = pickle.load(f)
+        else:
+            # computationally expensive
+            X_train, y_train = prepare_for_custom_triplet_loss_batches(X_train, y_train, batch_size, num_classes)
 
-        X_train = np.empty(shape=X_train.shape)
-        y_train = np.empty(shape=y_train.shape)
-
-        while num_seen_samples < num_samples:
-            to_idx = idx + num_samples_to_select
-
-            for c in range(num_classes):
-                X_selection = np.stack(Xy[:, 0][Xy[:, 1] == c][idx:to_idx])
-                y_selection = np.stack(Xy[:, 1][Xy[:, 1] == c][idx:to_idx])
-                num_selected = len(y_selection)
-
-                X_train[num_seen_samples:num_seen_samples + num_selected, :] = X_selection
-                y_train[num_seen_samples:num_seen_samples + num_selected] = y_selection
-
-                num_seen_samples += num_selected
-
-            idx = to_idx
-
-        X_train = tf.convert_to_tensor(X_train)
-        y_train = tf.convert_to_tensor(y_train)
+            with open(f'{emb_name}_pretrain_triplet_loss.pickle', 'wb') as f:
+                pickle.dump([X_train, y_train], f)
 
     model.compile(optimizer=optimizers.Adam(learning_rate=2e-5), loss=loss, metrics=['accuracy'])
 
