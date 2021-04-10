@@ -4,7 +4,7 @@ from testing import Testing
 import os, json, time, copy, psutil
 
 
-def train_model_multi(model_multi, embed_f, limit_num_sents: bool):
+def train_model_multi(model_multi, embed_f, limit_num_sents):
     model_multi_name = type(model_multi).__name__
 
     # Load dataset
@@ -23,7 +23,7 @@ def train_model_multi(model_multi, embed_f, limit_num_sents: bool):
 
     start_time_inference_split = time.time()
     X_multi_test, y_multi_test = split_multi.get_X_y(dataset['test'] + dataset['oos_test'],
-                                                     limit_num_sents=limit_num_sents,
+                                                     limit_num_sents=None,
                                                      set_type='test')
     time_inference_split = time.time() - start_time_inference_split
 
@@ -38,7 +38,7 @@ def train_model_multi(model_multi, embed_f, limit_num_sents: bool):
     return model_multi, X_multi_test, y_multi_test, split_multi, time_inference_split
 
 
-def evaluate(dataset, model, model_name, embed_f, limit_num_sents: bool):
+def evaluate(dataset, model, model_name, embed_f, limit_num_sents):
     # TRAINING
     start_time_train = time.time()
 
@@ -50,11 +50,11 @@ def evaluate(dataset, model, model_name, embed_f, limit_num_sents: bool):
     # Split dataset
     split = Split(embed_f)
 
-    X_bin_train, y_bin_train = split.get_X_y(dataset['train'], limit_num_sents=False, set_type='train')
+    X_bin_train, y_bin_train = split.get_X_y(dataset['train'], limit_num_sents=None, set_type='train')
 
     # Train
     if model_name in NEEDS_VAL:
-        X_bin_val, y_bin_val = split.get_X_y(dataset['val'], limit_num_sents=False, set_type='val')
+        X_bin_val, y_bin_val = split.get_X_y(dataset['val'], limit_num_sents=None, set_type='val')
 
         model.fit(X_bin_train, y_bin_train, X_bin_val, y_bin_val)
     else:

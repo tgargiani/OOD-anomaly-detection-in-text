@@ -1,9 +1,14 @@
-import os, random
+import os, random, json
 import tensorflow as tf
 import numpy as np
 import math
 import matplotlib.pyplot as plt
 import sklearn
+
+RESULTS_PATH = os.path.join(os.path.dirname(__file__), '..', 'results')
+
+RESULTS_CLINC150_PATH = os.path.join(RESULTS_PATH, 'CLINC150')
+RESULTS_CLINC150_RIS_PATH = os.path.join(RESULTS_CLINC150_PATH, 'RIS')  # random intent selection results path
 
 EMB_PATH = os.path.join(os.path.dirname(__file__), '..', 'embeddings')
 DS_PATH = os.path.join(os.path.dirname(__file__), '..', 'datasets')
@@ -12,8 +17,6 @@ USE_DAN_PATH = os.path.join(EMB_PATH, 'universal-sentence-encoder_4')  # USE wit
 USE_TRAN_PATH = os.path.join(EMB_PATH, 'universal-sentence-encoder-large_5')  # USE with Transformer architecture
 
 DS_CLINC150_PATH = os.path.join(DS_PATH, 'CLINC150')
-
-NUM_SENTS = {'train': 18, 'val': 18, 'test': 30, 'train_oos': 20, 'val_oos': 20, 'test_oos': 60}
 
 EXTRA_LAYER_ACT_F = tf.keras.activations.relu  # specifies the activation function of the extra layer in NNs
 NEEDS_VAL = ['BaselineNN', 'BaselineNNExtraLayer', 'CosFaceNN', 'CosFaceNNExtraLayer', 'CosFaceLOFNN', 'ArcFaceNN',
@@ -34,13 +37,13 @@ class Split:
         self.new_key_value = 0
         self.embed_f = embed_f
 
-    def get_X_y(self, lst, limit_num_sents: bool, set_type: str):
+    def get_X_y(self, lst, limit_num_sents, set_type: str):
         """
         Splits a part (contained in lst) of dataset into sentences and intents.
 
         :param:             lst - contains the dataset, list
-                            limit_num_sents - specifies if every intent should have a limited number of sentences, bool
-                            set_type - specifies the type of the received dataset (train, val or test), str
+                            limit_num_sents - specifies (if not None) the limited number of sentences per intent, int
+                            set_type - deprecated; specifies the type of the received dataset (train, val or test), str
         :returns:           X - sentences encoded as embeddings, tf.Tensor OR sentences, list
                             y - intents, tf.Tensor
         """
@@ -57,14 +60,11 @@ class Split:
                 self.intents_dct[label] = self.new_key_value
                 self.new_key_value += 1
 
-            if limit_num_sents:
+            if limit_num_sents and label != 'oos':  # don't limit number of OOD sentences
                 if label not in label_occur_count.keys():
                     label_occur_count[label] = 0
 
-                # limit of occurrence of specific intent:
-                occur_limit = NUM_SENTS[set_type] if label != 'oos' else NUM_SENTS[f'{set_type}_oos']
-
-                if label_occur_count[label] == occur_limit:  # skip sentence and label if reached limit
+                if label_occur_count[label] == limit_num_sents:  # skip sentence and label if reached limit
                     continue
 
                 label_occur_count[label] += 1
@@ -236,3 +236,38 @@ def prepare_for_custom_triplet_loss_batches(X_train, y_train, batch_size, num_cl
     y_train = tf.convert_to_tensor(y_train)
 
     return X_train, y_train
+
+
+def get_intents_selection(lst, num_intents: int):
+    """
+    Returns a random selection of intent labels.
+    :params:            lst - contains sublists in the following form: [sentence, label]
+                        num_intents, int
+    :returns:           selection, (num_intents, ) np.ndarray
+    """
+
+    unique_intents = list(set([l[1] for l in lst]))
+    selection = np.random.choice(unique_intents, num_intents,
+                                 replace=False)  # replace=False doesn't allow elements to repeat
+
+    return selection
+
+
+def get_filtered_lst(lst, selection):
+    """
+    Filters a list in order to contain only sublists with intent labels contained in selection.
+    :returns:           filtered_lst, list
+    """
+    filtered_lst = [l for l in lst if l[1] in selection]
+
+    return filtered_lst
+
+
+def save_results(dataset_name, results_dct):
+    if dataset_name == 'clinc150-data_full':
+        path = os.path.join(RESULTS_CLINC150_RIS_PATH, 'results.json')
+    else:
+        raise ValueError("Wrong dataset name! Can't save.")
+
+    with open(path, 'w') as f:
+        json.dump(results_dct, f, indent=2)

@@ -5,7 +5,7 @@ import time, psutil
 import numpy as np
 
 
-def evaluate(dataset, model, model_name, embed_f, limit_num_sents: bool):
+def evaluate(dataset, model, model_name, embed_f, limit_num_sents):
     split = Split(embed_f)
 
     # TRAINING
@@ -46,7 +46,7 @@ def evaluate(dataset, model, model_name, embed_f, limit_num_sents: bool):
     start_time_inference = time.time()
 
     # Split dataset
-    X_test, y_test = split.get_X_y(dataset['test'] + dataset['oos_test'], limit_num_sents=limit_num_sents,
+    X_test, y_test = split.get_X_y(dataset['test'] + dataset['oos_test'], limit_num_sents=None,
                                    set_type='test')
 
     # Test

@@ -12,12 +12,12 @@ import pickle
 import os
 
 
-def create_bert_embed_f(dataset_train, limit_num_sents, type: str):
+def create_bert_embed_f(dataset, limit_num_sents, type: str):
     """Fine-tunes embeddings from BERT. Returns new embed function."""
 
     SEQ_LEN = 64  # sequence length of BERT
     split = Split(None)  # split without changing to embedding
-    X_train, y_train = split.get_X_y(dataset_train, limit_num_sents=limit_num_sents, set_type='train')
+    X_train, y_train = split.get_X_y(dataset['train'], limit_num_sents=limit_num_sents, set_type='train')
 
     num_classes = len(set(np.asarray(y_train)))
     tokenizer = AutoTokenizer.from_pretrained('bert-base-uncased')
@@ -73,11 +73,11 @@ def create_bert_embed_f(dataset_train, limit_num_sents, type: str):
     return embed_f
 
 
-def create_embed_f(old_embed_f, dataset_train, limit_num_sents, type: str, visualize=False, emb_name=None):
+def create_embed_f(old_embed_f, dataset, limit_num_sents, type: str, visualize=False, emb_name=None):
     """Fine-tunes embeddings from USE or SBERT (using their embedding function). Returns new embed function."""
 
     split = Split(old_embed_f)
-    X_train, y_train = split.get_X_y(dataset_train, limit_num_sents=limit_num_sents, set_type='train')
+    X_train, y_train = split.get_X_y(dataset['train'], limit_num_sents=limit_num_sents, set_type='train')
 
     emb_dim = X_train.shape[1]
     num_classes = len(set(np.asarray(y_train)))
@@ -101,15 +101,16 @@ def create_embed_f(old_embed_f, dataset_train, limit_num_sents, type: str, visua
         shuffle = False  # shuffle manually
         batch_size = 300
 
-        if os.path.isfile(f'{emb_name}_pretrain_triplet_loss.pickle'):
+        if (not limit_num_sents) and os.path.isfile(f'{emb_name}_pretrain_triplet_loss.pickle'):
             with open(f'{emb_name}_pretrain_triplet_loss.pickle', 'rb') as f:
                 X_train, y_train = pickle.load(f)
         else:
             # computationally expensive
             X_train, y_train = prepare_for_custom_triplet_loss_batches(X_train, y_train, batch_size, num_classes)
 
-            with open(f'{emb_name}_pretrain_triplet_loss.pickle', 'wb') as f:
-                pickle.dump([X_train, y_train], f)
+            if not limit_num_sents:
+                with open(f'{emb_name}_pretrain_triplet_loss.pickle', 'wb') as f:
+                    pickle.dump([X_train, y_train], f)
 
     model.compile(optimizer=optimizers.Adam(learning_rate=2e-5), loss=loss, metrics=['accuracy'])
 
