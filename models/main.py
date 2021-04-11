@@ -125,7 +125,7 @@ else:
     for num_intents in [2, 3, 4, 5, 6, 8, 10, 15, 20, 25, 50, 100, 150]:  # limit number of intents
         results_dct[num_intents] = {}
 
-        for limit_num_sents in range(4, 101, step=4):  # 4,8,..,100
+        for limit_num_sents in range(4, 101, 4):  # 4,8,..,100
             results_dct[num_intents][limit_num_sents] = {}
 
             dct_shortcut = results_dct[num_intents][limit_num_sents]
