@@ -119,7 +119,7 @@ def create_embed_f(old_embed_f, dataset, limit_num_sents, type: str, visualize=F
     else:  # cosface
         X = [X_train, y_train]
 
-    model.fit(X, y_train, epochs=40, shuffle=shuffle, batch_size=batch_size)
+    model.fit(X, y_train, epochs=80, shuffle=shuffle, batch_size=batch_size)
 
     if visualize:
         pca = PCA(n_components=2)

@@ -112,6 +112,8 @@ else:
     # use only ADB with euclidean distance and USE-TRAN embeddings with CosFace and Triplet Loss pre-training for random selection
     from ood_train import evaluate
 
+    model = AdaptiveDecisionBoundaryNN('euclidean')
+    model_name = type(model).__name__
     use_tran = hub.load(USE_TRAN_PATH)
 
     results_dct = {}
@@ -157,9 +159,6 @@ else:
                                                                               emb_name='use_tran')
 
                 for emb_name, embed_f in embedding_functions.items():
-                    model = AdaptiveDecisionBoundaryNN('euclidean')
-                    model_name = type(model).__name__
-
                     temp_res = evaluate(modified_dataset, model, model_name, embed_f,
                                         limit_num_sents)  # temporary results
 
