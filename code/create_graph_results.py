@@ -26,7 +26,7 @@ for num_intents in results:
         recall_p, = ax.plot(labels, recall_lst, '--', color=accuracy_p.get_color(), label=f'{emb} – recall')
         ax.legend()
 
-    ax.set(xlabel='Number of sentences', ylabel='Accuracy and recall [%]')
+    ax.set(xlabel='Number of sentences per intent', ylabel='Accuracy and recall [%]')
     ax.set_xticks(labels)
     ax.set_yticks(y_labels)
 
