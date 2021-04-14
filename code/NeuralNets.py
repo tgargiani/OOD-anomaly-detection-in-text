@@ -115,7 +115,7 @@ class AdaptiveDecisionBoundaryNN:
         self.centroids = compute_centroids(X_train, y_train)
 
         embedding_input = layers.Input(shape=(emb_dim))
-        label_input = layers.Input(shape=(1))
+        label_input = layers.Input(shape=())
         dense_output = layers.Dense(emb_dim, activation=activations.relu)(embedding_input)
         dense_output = layers.Dense(emb_dim, activation=activations.relu)(dense_output)
         dense_output = layers.Dense(emb_dim, activation=activations.relu)(dense_output)

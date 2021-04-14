@@ -171,8 +171,7 @@ class AdaptiveDecisionBoundary(layers.Layer):
         d = tf.gather(soft_delta, labels)
 
         if self.dist_type == 'euclidean':
-            distance = tf.norm(embeddings - c, ord='euclidean',
-                               axis=2)  # extra batch dimension -> axis=2 (instead of 1)
+            distance = tf.norm(embeddings - c, ord='euclidean', axis=1)
         else:
             embeddings_norm = tf.nn.l2_normalize(embeddings, axis=1)
             c = tf.squeeze(c)
