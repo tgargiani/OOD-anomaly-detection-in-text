@@ -4,6 +4,7 @@ from custom_embeddings import create_bert_embed_f, create_embed_f
 from CosineSimilarity import CosineSimilarity
 from NeuralNets import BaselineNN, BaselineNNExtraLayer, CosFaceNN, CosFaceNNExtraLayer, CosFaceLOFNN, ArcFaceNN, \
     ArcFaceNNExtraLayer, AdaptiveDecisionBoundaryNN
+from ADBThreshold import ADBThreshold
 
 import os, json, copy
 import tensorflow_hub as hub
@@ -22,6 +23,7 @@ imports = []
 # from ood_train import evaluate
 #
 # imports.append((evaluate, [
+#     ADBThreshold(),
 #     AdaptiveDecisionBoundaryNN('angular'),
 #     AdaptiveDecisionBoundaryNN('cosine'),
 #     AdaptiveDecisionBoundaryNN('euclidean'),
@@ -112,7 +114,8 @@ else:
     # use only ADB with euclidean distance and USE-TRAN embeddings with CosFace and Triplet Loss pre-training for random selection
     from ood_train import evaluate
 
-    model = AdaptiveDecisionBoundaryNN('euclidean')
+    # model = AdaptiveDecisionBoundaryNN('euclidean')
+    model = ADBThreshold()
     model_name = type(model).__name__
     use_tran = hub.load(USE_TRAN_PATH)
 
@@ -153,10 +156,11 @@ else:
 
                 embedding_functions = {}
                 embedding_functions['use_tran_cosface'] = create_embed_f(use_tran, modified_dataset, limit_num_sents,
-                                                                         type='cosface', emb_name='use_tran')
+                                                                         type='cosface', emb_name='use_tran',
+                                                                         visualize=False)
                 embedding_functions['use_tran_triplet_loss'] = create_embed_f(use_tran, modified_dataset,
                                                                               limit_num_sents, type='triplet_loss',
-                                                                              emb_name='use_tran')
+                                                                              emb_name='use_tran', visualize=False)
 
                 for emb_name, embed_f in embedding_functions.items():
                     temp_res = evaluate(modified_dataset, model, model_name, embed_f,

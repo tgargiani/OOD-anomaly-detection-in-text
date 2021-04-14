@@ -11,7 +11,7 @@ def evaluate(dataset, model, model_name, embed_f, limit_num_sents):
     start_time_train = time.time()
 
     # Split dataset
-    if model_name == 'AdaptiveDecisionBoundaryNN':
+    if model_name == 'ADBThreshold' or model_name == 'AdaptiveDecisionBoundaryNN':
         train_dataset = dataset['train']
     else:
         train_dataset = dataset['train'] + dataset['oos_train']
@@ -33,6 +33,18 @@ def evaluate(dataset, model, model_name, embed_f, limit_num_sents):
 
     end_time_train = time.time()
 
+    # ------------------
+    # from sklearn.decomposition import PCA
+    # from utils import visualize_2d_data
+    # pca = PCA(n_components=2)
+    #
+    # # visualize original embeddings
+    # X_train_pca = pca.fit_transform(X_train)
+    # train_centroids = pca.transform(model.centroids)
+    # visualize_2d_data(X_train_pca, y_train, title=f'Train embeddings',
+    #                   centroids=train_centroids, delta=model.delta)
+    # -----------
+
     memory = psutil.Process().memory_full_info().uss / (1024 ** 2)  # in megabytes
 
     # TESTING
@@ -41,7 +53,15 @@ def evaluate(dataset, model, model_name, embed_f, limit_num_sents):
     # Split dataset
     X_test, y_test = split.get_X_y(dataset['test'] + dataset['oos_test'], limit_num_sents=None, set_type='test')
 
-    if model_name == 'AdaptiveDecisionBoundaryNN':
+    # ------------------
+    # X_test_pca = pca.fit_transform(X_test)
+    # test_centroids = pca.transform(model.centroids)
+    # visualize_2d_data(X_test_pca, y_test, title=f'Test embeddings',
+    #                   centroids=test_centroids, delta=model.delta)
+    # print(model.delta)
+    # ------------------
+
+    if model_name == 'ADBThreshold' or model_name == 'AdaptiveDecisionBoundaryNN':
         model.oos_label = split.intents_dct['oos']
 
     # Test
