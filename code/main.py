@@ -188,4 +188,4 @@ else:
             print_results(dataset_name, model_name, 'use_tran_cosface', dct_cosface)
             print_results(dataset_name, model_name, 'use_tran_triplet_loss', dct_triplet_loss)
 
-    save_results(dataset_name, results_dct)
+        save_results(dataset_name, results_dct)
