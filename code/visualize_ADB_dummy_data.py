@@ -1,5 +1,5 @@
 from custom_models import ADBPretrainSoftmaxModel, ADBPretrainCosFaceModel, ADBPretrainTripletLossModel
-from utils import batches, visualize_2d_data, prepare_for_custom_triplet_loss_batches
+from utils import batches, visualize_2d_data
 
 from NeuralNets import AdaptiveDecisionBoundaryNN
 from sklearn.datasets import make_blobs, make_classification
@@ -7,8 +7,6 @@ import tensorflow as tf
 import tensorflow_addons as tfa
 from tensorflow import optimizers, losses
 import numpy as np
-import sklearn
-import math
 
 
 def embed_f(X, pretraining_model):
@@ -60,13 +58,8 @@ if __name__ == '__main__':
         batch_size = None  # defaults to 32
     else:  # triplet_loss
         loss = tfa.losses.TripletSemiHardLoss()
-        # shuffle = True  # shuffle before every epoch in order to guarantee diversity in pos and neg samples
-        # batch_size = 256  # same as above
-
-        shuffle = False  # shuffle manually
-        batch_size = 300
-
-        X_train, y_train = prepare_for_custom_triplet_loss_batches(X_train, y_train, batch_size, num_classes)
+        shuffle = True  # shuffle before every epoch in order to guarantee diversity in pos and neg samples
+        batch_size = 300  # same as above - to guarantee...
 
     pretraining_model.compile(optimizer=optimizers.Adam(learning_rate=2e-5), loss=loss, metrics=['accuracy'])
 

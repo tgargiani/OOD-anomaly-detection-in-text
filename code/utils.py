@@ -201,7 +201,10 @@ def visualize_2d_data(X, y, title, centroids=None, delta=None, save=False):
 
 
 def prepare_for_custom_triplet_loss_batches(X_train, y_train, batch_size, num_classes):
-    """Reorders data so that each batch contains at least one random embedding per class."""
+    """
+    Reorders data so that each batch contains at least one random embedding per class.
+    Not used - Triplet Loss requires at least two embeddings per class.
+    """
 
     num_samples = X_train.shape[0]
     num_samples_to_select = math.ceil(batch_size / num_classes)

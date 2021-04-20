@@ -1,4 +1,4 @@
-from utils import Split, batches, visualize_2d_data, prepare_for_custom_triplet_loss_batches
+from utils import Split, batches, visualize_2d_data
 from custom_models import ADBPretrainBERTSoftmaxModel, ADBPretrainBERTCosFaceModel, ADBPretrainBERTTripletLossModel, \
     ADBPretrainSoftmaxModel, ADBPretrainCosFaceModel, ADBPretrainTripletLossModel
 
@@ -8,8 +8,6 @@ import tensorflow as tf
 from tensorflow.keras import losses, optimizers
 import tensorflow_addons as tfa
 from sklearn.decomposition import PCA
-import pickle
-import os
 
 
 def create_bert_embed_f(dataset, limit_num_sents, type: str):
@@ -95,22 +93,8 @@ def create_embed_f(old_embed_f, dataset, limit_num_sents, type: str, visualize=F
         batch_size = None  # defaults to 32
     else:  # triplet_loss
         loss = tfa.losses.TripletSemiHardLoss()
-        # shuffle = True  # shuffle before every epoch in order to guarantee diversity in pos and neg samples
-        # batch_size = 256  # same as above
-
-        shuffle = False  # shuffle manually
-        batch_size = 300
-
-        if (not limit_num_sents) and os.path.isfile(f'{emb_name}_pretrain_triplet_loss.pickle'):
-            with open(f'{emb_name}_pretrain_triplet_loss.pickle', 'rb') as f:
-                X_train, y_train = pickle.load(f)
-        else:
-            # computationally expensive
-            X_train, y_train = prepare_for_custom_triplet_loss_batches(X_train, y_train, batch_size, num_classes)
-
-            if not limit_num_sents:
-                with open(f'{emb_name}_pretrain_triplet_loss.pickle', 'wb') as f:
-                    pickle.dump([X_train, y_train], f)
+        shuffle = True  # shuffle before every epoch in order to guarantee diversity in pos and neg samples
+        batch_size = 300  # same as above - to guarantee...
 
     model.compile(optimizer=optimizers.Adam(learning_rate=2e-5), loss=loss, metrics=['accuracy'])
 
