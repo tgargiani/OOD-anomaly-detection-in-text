@@ -4,7 +4,9 @@ import os, json
 import matplotlib.pyplot as plt
 import numpy as np
 
-path = os.path.join(RESULTS_CLINC150_RIS_PATH, 'results.json')
+# model_name = 'AdaptiveDecisionBoundaryNN_euclidean'
+model_name = 'ADBThreshold'
+path = os.path.join(RESULTS_CLINC150_RIS_PATH, f'results_{model_name}.json')
 
 with open(path, 'r') as f:
     results = json.load(f)
@@ -16,7 +18,7 @@ for num_intents in results:
 
     labels = list(results[num_intents].keys())
     fig, ax = plt.subplots()
-    plt.title(f'ADB – {num_intents} intents')
+    plt.title(f'{model_name} – {num_intents} intents')
 
     for e, emb in enumerate(['use_tran_cosface', 'use_tran_triplet_loss']):
         accuracy_lst = [d[emb]['accuracy'] for d in results[num_intents].values()]
