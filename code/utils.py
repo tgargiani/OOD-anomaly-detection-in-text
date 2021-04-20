@@ -17,6 +17,7 @@ USE_DAN_PATH = os.path.join(EMB_PATH, 'universal-sentence-encoder_4')  # USE wit
 USE_TRAN_PATH = os.path.join(EMB_PATH, 'universal-sentence-encoder-large_5')  # USE with Transformer architecture
 
 DS_CLINC150_PATH = os.path.join(DS_PATH, 'CLINC150')
+DS_ROSTD_PATH = os.path.join(DS_PATH, 'ROSTD')
 
 EXTRA_LAYER_ACT_F = tf.keras.activations.relu  # specifies the activation function of the extra layer in NNs
 NEEDS_VAL = ['BaselineNN', 'BaselineNNExtraLayer', 'CosFaceNN', 'CosFaceNNExtraLayer', 'CosFaceLOFNN', 'ArcFaceNN',

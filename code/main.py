@@ -1,5 +1,5 @@
 from utils import DS_CLINC150_PATH, USE_DAN_PATH, USE_TRAN_PATH, print_results, get_intents_selection, get_filtered_lst, \
-    save_results
+    save_results, DS_ROSTD_PATH
 from custom_embeddings import create_bert_embed_f, create_embed_f
 from CosineSimilarity import CosineSimilarity
 from NeuralNets import BaselineNN, BaselineNNExtraLayer, CosFaceNN, CosFaceNNExtraLayer, CosFaceLOFNN, ArcFaceNN, \
@@ -66,6 +66,9 @@ imports = []
 # ------------------------------------------------------------
 dataset_name = 'clinc150-data_full'
 dataset_path = os.path.join(DS_CLINC150_PATH, 'data_full.json')
+# ------------------------------------------------------------
+# dataset_name = 'rostd_full'
+# dataset_path = os.path.join(DS_ROSTD_PATH, 'rostd_full.json')
 # ------------------------------------------------------------
 
 with open(dataset_path) as f:
