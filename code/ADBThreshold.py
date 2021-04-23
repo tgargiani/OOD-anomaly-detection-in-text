@@ -5,7 +5,14 @@ import numpy.linalg as LA
 import tensorflow as tf
 
 
-def find_best_radius(X_train, y_train, centroids, step=0.01, constant=1.5):
+def find_best_radius(X_train, y_train, centroids, alpha, step_size):
+    """
+    Best alpha (hyperparameter) for dataset:
+    – CLINC150 – 1.35
+    – ROSTD – 1.0
+    – Lucid Lindia – 1.0
+    """
+
     X, y = np.asarray(X_train), np.asarray(y_train)
     centroids = np.asarray(centroids)
     num_classes = len(set(y))  # number of classes
@@ -20,13 +27,16 @@ def find_best_radius(X_train, y_train, centroids, step=0.01, constant=1.5):
 
             ood_criterion = (dists_sel - radius[c]) * ood_mask
             id_criterion = (radius[c] - dists_sel) * id_mask
-            criterion = tf.reduce_mean(ood_criterion) - (tf.reduce_mean(id_criterion) * num_classes / constant)
+
+            id_mask_sum = np.sum(id_mask)
+            per = (np.sum(ood_mask) / id_mask_sum) if id_mask_sum != 0 else np.inf
+            criterion = tf.reduce_mean(ood_criterion) - (tf.reduce_mean(id_criterion) * per / alpha)
 
             if criterion < 0:  # ID outweighs OOD
-                radius[c] -= step
+                radius[c] -= step_size
                 break
 
-            radius[c] += step
+            radius[c] += step_size
 
     return tf.convert_to_tensor(radius, dtype=tf.float32)
 
@@ -36,16 +46,18 @@ class ADBThreshold:
     Adaptive Decision Boundary Threshold
     """
 
-    def __init__(self):
+    def __init__(self, alpha=1.35, step_size=0.01):
         self.radius = None
         self.centroids = None
         self.oos_label = None
+        self.alpha = alpha
+        self.step_size = step_size
 
     def fit(self, X_train, y_train):
         X_train = tf.math.l2_normalize(X_train, axis=1)  # normalize to make sure it lies on a unit n-sphere
         self.centroids = compute_centroids(X_train, y_train)
         self.centroids = tf.math.l2_normalize(self.centroids, axis=1)
-        self.radius = find_best_radius(X_train, y_train, self.centroids)
+        self.radius = find_best_radius(X_train, y_train, self.centroids, self.alpha, self.step_size)
 
     def predict(self, X_test):
         X_test = tf.math.l2_normalize(X_test, axis=1)
