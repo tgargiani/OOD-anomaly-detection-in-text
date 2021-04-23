@@ -1,5 +1,5 @@
 from utils import DS_CLINC150_PATH, USE_DAN_PATH, USE_TRAN_PATH, print_results, get_intents_selection, get_filtered_lst, \
-    save_results, DS_ROSTD_PATH
+    save_results, DS_ROSTD_PATH, DS_LL_PATH, cross_val_evaluate
 from custom_embeddings import create_bert_embed_f, create_embed_f
 from CosineSimilarity import CosineSimilarity
 from NeuralNets import BaselineNN, BaselineNNExtraLayer, CosFaceNN, CosFaceNNExtraLayer, CosFaceLOFNN, ArcFaceNN, \
@@ -23,7 +23,8 @@ imports = []
 # from ood_train import evaluate
 #
 # imports.append((evaluate, [
-#     ADBThreshold(),
+#     ADBThreshold(alpha=1.35),  # best for CLINC150
+#     ADBThreshold(alpha=1.0),  # best for ROSTD, Lucid Lindia
 #     AdaptiveDecisionBoundaryNN('angular'),
 #     AdaptiveDecisionBoundaryNN('cosine'),
 #     AdaptiveDecisionBoundaryNN('euclidean'),
@@ -70,9 +71,15 @@ dataset_path = os.path.join(DS_CLINC150_PATH, 'data_full.json')
 # dataset_name = 'rostd_full'
 # dataset_path = os.path.join(DS_ROSTD_PATH, 'rostd_full.json')
 # ------------------------------------------------------------
+# dataset_name = 'lucid_lindia'
+# categories = ['animals', 'books', 'brainquist', 'education', 'fashion', 'foods', 'habits', 'movies', 'music', 'science',
+#               'smalltalk', 'sports', 'traveling']  # all
+# ------------------------------------------------------------
 
-with open(dataset_path) as f:
-    dataset = json.load(f)
+
+if dataset_name != 'lucid_lindia':
+    with open(dataset_path) as f:
+        dataset = json.load(f)
 
 embedding_functions = {}  # uncomment them one by one when measuring memory usage
 # embedding_functions['use_dan'] = hub.load(USE_DAN_PATH)
@@ -102,6 +109,10 @@ embedding_functions = {}  # uncomment them one by one when measuring memory usag
 # embedding_functions['sbert_cosface'] = create_embed_f(sbert, dataset, LIMIT_NUM_SENTS, type='cosface')
 # embedding_functions['sbert_triplet_loss'] = create_embed_f(sbert, dataset, LIMIT_NUM_SENTS,
 #                                                            type='triplet_loss', emb_name='sbert')
+#
+# embedding_functions[
+#     'placeholder'] = None  # use this placeholder if you want to use ADB pre-training on lucid_lindia dataset.
+# # Choose pre-training type in cross_val_evaluate.
 
 if not RANDOM_SELECTION:
     for i in imports:
@@ -110,15 +121,21 @@ if not RANDOM_SELECTION:
         for emb_name, embed_f in embedding_functions.items():
             for model in i[1]:
                 model_name = type(model).__name__
-                results_dct = evaluate(dataset, model, model_name, embed_f, LIMIT_NUM_SENTS)
+
+                if dataset_name != 'lucid_lindia':
+                    results_dct = evaluate(dataset, model, model_name, embed_f, LIMIT_NUM_SENTS)
+                else:
+                    results_dct, emb_name = cross_val_evaluate(categories, evaluate, model, model_name, emb_name,
+                                                               embed_f, LIMIT_NUM_SENTS)
 
                 print_results(dataset_name, model_name, emb_name, results_dct)
 else:
+    # use only CLINC150 dataset
     # use only ADB with euclidean distance and USE-TRAN embeddings with CosFace and Triplet Loss pre-training for random selection
     from ood_train import evaluate
 
     # model = AdaptiveDecisionBoundaryNN('euclidean')
-    model = ADBThreshold()
+    model = ADBThreshold(1.35)
     model_name = type(model).__name__
     use_tran = hub.load(USE_TRAN_PATH)
 

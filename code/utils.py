@@ -4,6 +4,7 @@ import numpy as np
 import math
 import matplotlib.pyplot as plt
 import sklearn
+from sklearn.model_selection import StratifiedKFold, train_test_split
 
 RESULTS_PATH = os.path.join(os.path.dirname(__file__), '..', 'results')
 
@@ -18,6 +19,7 @@ USE_TRAN_PATH = os.path.join(EMB_PATH, 'universal-sentence-encoder-large_5')  # 
 
 DS_CLINC150_PATH = os.path.join(DS_PATH, 'CLINC150')
 DS_ROSTD_PATH = os.path.join(DS_PATH, 'ROSTD')
+DS_LL_PATH = os.path.join(DS_PATH, 'lucid_lindia-2')
 
 EXTRA_LAYER_ACT_F = tf.keras.activations.relu  # specifies the activation function of the extra layer in NNs
 NEEDS_VAL = ['BaselineNN', 'BaselineNNExtraLayer', 'CosFaceNN', 'CosFaceNNExtraLayer', 'CosFaceLOFNN', 'ArcFaceNN',
@@ -275,3 +277,114 @@ def save_results(dataset_name, results_dct):
 
     with open(path, 'w') as f:
         json.dump(results_dct, f, indent=2)
+
+
+def get_unsplit_Xy_ID_OOD(dialogue_path):
+    category = dialogue_path.split(sep=os.sep)[-2]
+    ood_clinc_path = os.path.join(DS_LL_PATH, 'data_clinc_ood', f'{category}_ood.json')
+    ood_cross_path = os.path.join(DS_LL_PATH, 'data_cross_ood', f'{category}_ood.json')
+
+    with open(dialogue_path) as f:
+        dialogue = json.load(f)
+
+    decision_nodes = dialogue['decisionNodes']
+    intents_sel = []
+
+    for node in decision_nodes:
+        for link in dialogue['links'][str(node)]:
+            intents_sel.append(str(link))
+
+    Xy_ID = []
+
+    for intent in intents_sel:
+        if intent not in dialogue['intents'].keys():
+            continue
+
+        for sent in dialogue['intents'][intent]['original_plus_noised']:
+            Xy_ID.append([sent, intent])
+
+    for intent in dialogue['globalIntents']:
+        for sent in dialogue['globalIntents'][intent]['original_plus_noised']:
+            Xy_ID.append([sent, intent])
+
+    Xy_OOD = []
+
+    with open(ood_clinc_path) as f:
+        ood_clinc = json.load(f)
+
+    with open(ood_cross_path) as f:
+        ood_cross = json.load(f)
+
+    for sent in ood_clinc['ood']:
+        Xy_OOD.append([sent, 'oos'])
+
+    for sent in ood_cross['ood']:
+        Xy_OOD.append([sent, 'oos'])
+
+    return Xy_ID, Xy_OOD
+
+
+def cross_val_evaluate(categories, evaluate, model, model_name, emb_name, embed_f, limit_num_sents):
+    original_emb_name = emb_name
+    dct_results_lst = []
+
+    for cat in categories:
+        cat_path = os.path.join(DS_LL_PATH, 'data', cat)
+        dataset_paths = [os.path.join(cat_path, ds) for ds in os.listdir(cat_path)]
+
+        for dialogue_path in dataset_paths:
+            Xy_ID, Xy_OOD = get_unsplit_Xy_ID_OOD(dialogue_path)
+            y_ID = [x[1] for x in Xy_ID]
+            y_OOD = [x[1] for x in Xy_OOD]
+
+            if original_emb_name == 'placeholder':
+                import tensorflow_hub as hub
+                from custom_embeddings import create_embed_f
+
+                use_dan = hub.load(USE_DAN_PATH)
+                # emb_name, embed_f = 'use_dan_softmax', create_embed_f(use_dan, {'train': Xy_ID}, limit_num_sents,
+                #                                                       type='softmax')
+                emb_name, embed_f = 'use_dan_cosface', create_embed_f(use_dan, {'train': Xy_ID}, limit_num_sents,
+                                                                      type='cosface')
+                # emb_name, embed_f = 'use_dan_triplet_loss', create_embed_f(use_dan, {'train': Xy_ID}, limit_num_sents,
+                #                                                            type='triplet_loss')
+
+                # use_tran = hub.load(USE_TRAN_PATH)
+                # emb_name, embed_f = 'use_tran_cosface', create_embed_f(use_tran, {'train': Xy_ID}, limit_num_sents,
+                #                                                        type='cosface')
+                # emb_name, embed_f = 'use_tran_triplet_loss', create_embed_f(use_tran, {'train': Xy_ID}, limit_num_sents,
+                #                                                             type='triplet_loss')
+
+            dataset = {}
+            skf = StratifiedKFold(n_splits=10)
+
+            for (train_idx_ID, test_idx_ID), (train_idx_OOD, test_idx_OOD) in zip(skf.split(Xy_ID, y_ID),
+                                                                                  skf.split(Xy_OOD, y_OOD)):
+                train_idx_ID, val_idx_ID = train_test_split(train_idx_ID, test_size=0.2)
+                dataset['train'] = [Xy_ID[i] for i in train_idx_ID]
+                dataset['val'] = [Xy_ID[i] for i in val_idx_ID]
+                dataset['test'] = [Xy_ID[i] for i in test_idx_ID]
+
+                train_idx_OOD, val_idx_OOD = train_test_split(train_idx_OOD, test_size=0.2)
+                dataset['oos_train'] = [Xy_OOD[i] for i in train_idx_OOD]
+                dataset['oos_val'] = [Xy_OOD[i] for i in val_idx_OOD]
+                dataset['oos_test'] = [Xy_OOD[i] for i in test_idx_OOD]
+
+                results_dct = evaluate(dataset, model, model_name, embed_f, limit_num_sents)
+                dct_results_lst.append(results_dct)
+
+    results_dct = {}
+    num_results = len(dct_results_lst)
+
+    for dct in dct_results_lst:
+        for key in dct:
+            if key not in results_dct:
+                results_dct[key] = 0
+
+            results_dct[key] += dct[key]
+
+    for key in results_dct:
+        results_dct[key] /= num_results
+        results_dct[key] = round(results_dct[key], 1)
+
+    return results_dct, emb_name
