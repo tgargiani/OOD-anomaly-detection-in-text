@@ -46,7 +46,7 @@ class ADBThreshold:
     Adaptive Decision Boundary Threshold
     """
 
-    def __init__(self, alpha=1.35, step_size=0.01):
+    def __init__(self, alpha=1.0, step_size=0.01):
         self.radius = None
         self.centroids = None
         self.oos_label = None
