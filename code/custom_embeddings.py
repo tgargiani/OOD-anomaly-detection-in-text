@@ -8,10 +8,13 @@ import tensorflow as tf
 from tensorflow.keras import losses, optimizers
 import tensorflow_addons as tfa
 from sklearn.decomposition import PCA
+import time
 
 
 def create_bert_embed_f(dataset, limit_num_sents, type: str):
     """Fine-tunes embeddings from BERT. Returns new embed function."""
+
+    start_time = time.time()
 
     SEQ_LEN = 64  # sequence length of BERT
     split = Split(None)  # split without changing to embedding
@@ -68,11 +71,16 @@ def create_bert_embed_f(dataset, limit_num_sents, type: str):
 
         return embeddings
 
-    return embed_f
+    end_time = time.time()
+    time_pretraining = round(end_time - start_time, 1)
+
+    return embed_f, time_pretraining
 
 
 def create_embed_f(old_embed_f, dataset, limit_num_sents, type: str, visualize=False, emb_name=None):
     """Fine-tunes embeddings from USE or SBERT (using their embedding function). Returns new embed function."""
+
+    start_time = time.time()
 
     split = Split(old_embed_f)
     X_train, y_train = split.get_X_y(dataset['train'], limit_num_sents=limit_num_sents, set_type='train')
@@ -136,4 +144,7 @@ def create_embed_f(old_embed_f, dataset, limit_num_sents, type: str, visualize=F
 
         return embeddings
 
-    return embed_f
+    end_time = time.time()
+    time_pretraining = round(end_time - start_time, 1)
+
+    return embed_f, time_pretraining

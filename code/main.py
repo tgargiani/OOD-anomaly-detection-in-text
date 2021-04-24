@@ -81,34 +81,42 @@ if dataset_name != 'lucid_lindia':
     with open(dataset_path) as f:
         dataset = json.load(f)
 
-embedding_functions = {}  # uncomment them one by one when measuring memory usage
+time_pretraining = None  # keeps track of pre-training time in seconds (if there's ADB pre-training)
+
+embedding_functions = {}  # uncomment them one by one when measuring memory usage or pre-training time
 # embedding_functions['use_dan'] = hub.load(USE_DAN_PATH)
 # embedding_functions['use_tran'] = hub.load(USE_TRAN_PATH)
 # embedding_functions['sbert'] = SentenceTransformer('stsb-roberta-base').encode
 
 # TO BE USED ONLY WITH ADAPTIVE DECISION BOUNDARY:
-# embedding_functions['bert_softmax'] = create_bert_embed_f(dataset, LIMIT_NUM_SENTS, type='softmax')
-# embedding_functions['bert_cosface'] = create_bert_embed_f(dataset, LIMIT_NUM_SENTS, type='cosface')
-# embedding_functions['bert_triplet_loss'] = create_bert_embed_f(dataset, LIMIT_NUM_SENTS, type='triplet_loss')
+# embedding_functions['bert_softmax'], time_pretraining = create_bert_embed_f(dataset, LIMIT_NUM_SENTS, type='softmax')
+# embedding_functions['bert_cosface'], time_pretraining = create_bert_embed_f(dataset, LIMIT_NUM_SENTS, type='cosface')
+# embedding_functions['bert_triplet_loss'], time_pretraining = create_bert_embed_f(dataset, LIMIT_NUM_SENTS,
+#                                                                                  type='triplet_loss')
 #
 # use_dan = hub.load(USE_DAN_PATH)
-# embedding_functions['use_dan_softmax'] = create_embed_f(use_dan, dataset, LIMIT_NUM_SENTS, type='softmax')
-# embedding_functions['use_dan_cosface'] = create_embed_f(use_dan, dataset, LIMIT_NUM_SENTS, type='cosface',
-#                                                         visualize=False)
-# embedding_functions['use_dan_triplet_loss'] = create_embed_f(use_dan, dataset, limit_num_sents=None,
-#                                                              type='triplet_loss', visualize=False, emb_name='use_dan')
+# embedding_functions['use_dan_softmax'], time_pretraining = create_embed_f(use_dan, dataset, LIMIT_NUM_SENTS,
+#                                                                           type='softmax')
+# embedding_functions['use_dan_cosface'], time_pretraining = create_embed_f(use_dan, dataset, LIMIT_NUM_SENTS,
+#                                                                           type='cosface', visualize=False)
+# embedding_functions['use_dan_triplet_loss'], time_pretraining = create_embed_f(use_dan, dataset, limit_num_sents=None,
+#                                                                                type='triplet_loss', visualize=False,
+#                                                                                emb_name='use_dan')
 #
 # use_tran = hub.load(USE_TRAN_PATH)
-# embedding_functions['use_tran_softmax'] = create_embed_f(use_tran, dataset, LIMIT_NUM_SENTS, type='softmax')
-# embedding_functions['use_tran_cosface'] = create_embed_f(use_tran, dataset, LIMIT_NUM_SENTS, type='cosface')
-# embedding_functions['use_tran_triplet_loss'] = create_embed_f(use_tran, dataset, LIMIT_NUM_SENTS,
-#                                                               type='triplet_loss', visualize=False, emb_name='use_tran')
+# embedding_functions['use_tran_softmax'], time_pretraining = create_embed_f(use_tran, dataset, LIMIT_NUM_SENTS,
+#                                                                            type='softmax')
+# embedding_functions['use_tran_cosface'], time_pretraining = create_embed_f(use_tran, dataset, LIMIT_NUM_SENTS,
+#                                                                            type='cosface')
+# embedding_functions['use_tran_triplet_loss'], time_pretraining = create_embed_f(use_tran, dataset, LIMIT_NUM_SENTS,
+#                                                                                 type='triplet_loss', visualize=False,
+#                                                                                 emb_name='use_tran')
 #
 # sbert = SentenceTransformer('stsb-roberta-base').encode
-# embedding_functions['sbert_softmax'] = create_embed_f(sbert, dataset, LIMIT_NUM_SENTS, type='softmax')
-# embedding_functions['sbert_cosface'] = create_embed_f(sbert, dataset, LIMIT_NUM_SENTS, type='cosface')
-# embedding_functions['sbert_triplet_loss'] = create_embed_f(sbert, dataset, LIMIT_NUM_SENTS,
-#                                                            type='triplet_loss', emb_name='sbert')
+# embedding_functions['sbert_softmax'], time_pretraining = create_embed_f(sbert, dataset, LIMIT_NUM_SENTS, type='softmax')
+# embedding_functions['sbert_cosface'], time_pretraining = create_embed_f(sbert, dataset, LIMIT_NUM_SENTS, type='cosface')
+# embedding_functions['sbert_triplet_loss'], time_pretraining = create_embed_f(sbert, dataset, LIMIT_NUM_SENTS,
+#                                                                              type='triplet_loss', emb_name='sbert')
 #
 # embedding_functions[
 #     'placeholder'] = None  # use this placeholder if you want to use ADB pre-training on lucid_lindia dataset.
@@ -124,6 +132,9 @@ if not RANDOM_SELECTION:
 
                 if dataset_name != 'lucid_lindia':
                     results_dct = evaluate(dataset, model, model_name, embed_f, LIMIT_NUM_SENTS)
+
+                    if time_pretraining is not None:
+                        results_dct['time_pretraining'] = time_pretraining
                 else:
                     results_dct, emb_name = cross_val_evaluate(categories, evaluate, model, model_name, emb_name,
                                                                embed_f, LIMIT_NUM_SENTS)
@@ -175,12 +186,12 @@ else:
                 modified_dataset['test'] = filt_test
 
                 embedding_functions = {}
-                embedding_functions['use_tran_cosface'] = create_embed_f(use_tran, modified_dataset, limit_num_sents,
-                                                                         type='cosface', emb_name='use_tran',
-                                                                         visualize=False)
-                embedding_functions['use_tran_triplet_loss'] = create_embed_f(use_tran, modified_dataset,
-                                                                              limit_num_sents, type='triplet_loss',
-                                                                              emb_name='use_tran', visualize=False)
+                embedding_functions['use_tran_cosface'], _ = create_embed_f(use_tran, modified_dataset, limit_num_sents,
+                                                                            type='cosface', emb_name='use_tran',
+                                                                            visualize=False)
+                embedding_functions['use_tran_triplet_loss'], _ = create_embed_f(use_tran, modified_dataset,
+                                                                                 limit_num_sents, type='triplet_loss',
+                                                                                 emb_name='use_tran', visualize=False)
 
                 for emb_name, embed_f in embedding_functions.items():
                     temp_res = evaluate(modified_dataset, model, model_name, embed_f,

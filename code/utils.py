@@ -327,6 +327,7 @@ def get_unsplit_Xy_ID_OOD(dialogue_path):
 def cross_val_evaluate(categories, evaluate, model, model_name, emb_name, embed_f, limit_num_sents):
     original_emb_name = emb_name
     dct_results_lst = []
+    total_time_pretraining = 0
 
     for cat in categories:
         cat_path = os.path.join(DS_LL_PATH, 'data', cat)
@@ -342,18 +343,27 @@ def cross_val_evaluate(categories, evaluate, model, model_name, emb_name, embed_
                 from custom_embeddings import create_embed_f
 
                 use_dan = hub.load(USE_DAN_PATH)
-                # emb_name, embed_f = 'use_dan_softmax', create_embed_f(use_dan, {'train': Xy_ID}, limit_num_sents,
-                #                                                       type='softmax')
-                emb_name, embed_f = 'use_dan_cosface', create_embed_f(use_dan, {'train': Xy_ID}, limit_num_sents,
-                                                                      type='cosface')
-                # emb_name, embed_f = 'use_dan_triplet_loss', create_embed_f(use_dan, {'train': Xy_ID}, limit_num_sents,
-                #                                                            type='triplet_loss')
-
+                # emb_name, (embed_f, time_pretraining) = 'use_dan_softmax', create_embed_f(use_dan, {'train': Xy_ID},
+                #                                                                           limit_num_sents,
+                #                                                                           type='softmax')
+                emb_name, (embed_f, time_pretraining) = 'use_dan_cosface', create_embed_f(use_dan, {'train': Xy_ID},
+                                                                                          limit_num_sents,
+                                                                                          type='cosface')
+                # emb_name, (embed_f, time_pretraining) = 'use_dan_triplet_loss', create_embed_f(use_dan,
+                #                                                                                {'train': Xy_ID},
+                #                                                                                limit_num_sents,
+                #                                                                                type='triplet_loss')
+                #
                 # use_tran = hub.load(USE_TRAN_PATH)
-                # emb_name, embed_f = 'use_tran_cosface', create_embed_f(use_tran, {'train': Xy_ID}, limit_num_sents,
-                #                                                        type='cosface')
-                # emb_name, embed_f = 'use_tran_triplet_loss', create_embed_f(use_tran, {'train': Xy_ID}, limit_num_sents,
-                #                                                             type='triplet_loss')
+                # emb_name, (embed_f, time_pretraining) = 'use_tran_cosface', create_embed_f(use_tran, {'train': Xy_ID},
+                #                                                                            limit_num_sents,
+                #                                                                            type='cosface')
+                # emb_name, (embed_f, time_pretraining) = 'use_tran_triplet_loss', create_embed_f(use_tran,
+                #                                                                                 {'train': Xy_ID},
+                #                                                                                 limit_num_sents,
+                #                                                                                 type='triplet_loss')
+
+                total_time_pretraining += time_pretraining
 
             dataset = {}
             skf = StratifiedKFold(n_splits=10)
@@ -384,7 +394,12 @@ def cross_val_evaluate(categories, evaluate, model, model_name, emb_name, embed_
             results_dct[key] += dct[key]
 
     for key in results_dct:
-        results_dct[key] /= num_results
+        if key not in ['time_train', 'time_inference']:  # keep track of total train and inference time
+            results_dct[key] /= num_results
+
         results_dct[key] = round(results_dct[key], 1)
+
+    if total_time_pretraining != 0:
+        results_dct['time_pretraining'] = round(total_time_pretraining, 1)
 
     return results_dct, emb_name
