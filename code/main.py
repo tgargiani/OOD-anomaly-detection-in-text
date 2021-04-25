@@ -24,7 +24,8 @@ imports = []
 #
 # imports.append((evaluate, [
 #     ADBThreshold(alpha=1.35),  # best for CLINC150
-#     ADBThreshold(alpha=1.0),  # best for ROSTD, Lucid Lindia
+#     ADBThreshold(alpha=0.6),  # best for ROSTD
+#     ADBThreshold(alpha=1.0), # best for Lucid Lindia
 #     AdaptiveDecisionBoundaryNN('angular'),
 #     AdaptiveDecisionBoundaryNN('cosine'),
 #     AdaptiveDecisionBoundaryNN('euclidean'),
