@@ -21,10 +21,10 @@ def find_best_radius(X_train, y_train, centroids, alpha, step_size):
     for c in range(num_classes):
         dists_sel = LA.norm(X - centroids[c], axis=1)  # distances of every point from the selected centroid
 
-        while radius[c] < 2:  # maximum distance on a unit n-sphere is 2
-            ood_mask = np.where(dists_sel > radius[c], 1, 0)  # out-of-domain
-            id_mask = np.where(dists_sel <= radius[c], 1, 0)  # in-domain
+        ood_mask = np.where(y != c, 1, 0)  # out-of-domain
+        id_mask = np.where(y == c, 1, 0)  # in-domain
 
+        while radius[c] < 2:  # maximum distance on a unit n-sphere is 2
             ood_criterion = (dists_sel - radius[c]) * ood_mask
             id_criterion = (radius[c] - dists_sel) * id_mask
 
