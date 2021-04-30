@@ -28,8 +28,7 @@ def find_best_radius(X_train, y_train, centroids, alpha, step_size):
             ood_criterion = (dists_sel - radius[c]) * ood_mask
             id_criterion = (radius[c] - dists_sel) * id_mask
 
-            id_mask_sum = np.sum(id_mask)
-            per = (np.sum(ood_mask) / id_mask_sum) if id_mask_sum != 0 else np.inf
+            per = np.sum(ood_mask) / np.sum(id_mask)
             criterion = tf.reduce_mean(ood_criterion) - (tf.reduce_mean(id_criterion) * per / alpha)
 
             if criterion < 0:  # ID outweighs OOD
