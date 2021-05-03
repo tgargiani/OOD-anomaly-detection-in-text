@@ -122,7 +122,7 @@ class AdaptiveDecisionBoundaryNN:
         loss = AdaptiveDecisionBoundary(num_classes, self.centroids, self.dist_type)((dense_output, label_input))
         self.model = tf.keras.Model(inputs=[embedding_input, label_input], outputs=loss)
 
-        self.model.compile(optimizer=tf.keras.optimizers.Adam(learning_rate=0.005), loss=None)
+        self.model.compile(optimizer=tf.keras.optimizers.Adam(learning_rate=0.01), loss=None)
         self.model.fit([X_train, y_train], None, epochs=40)
 
         self.delta = self.model.layers[-1].delta
