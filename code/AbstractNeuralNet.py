@@ -47,7 +47,7 @@ class AbstractNeuralNet(ABC):
 
             self.lof = LocalOutlierFactor(novelty=True, n_jobs=-1)
 
-            X_lof_train = self.feat_model.predict(X_train)
+            X_lof_train = self.feat_model.predict(X_train)  # extract discriminative features
             self.lof.fit(X_lof_train)
 
     def predict(self, X_test):
@@ -57,8 +57,6 @@ class AbstractNeuralNet(ABC):
         predictions = np.argmax(probs, axis=1)
 
         if self.model_name == 'CosFaceLOFNN':
-            # self.model also predicts 'oos', they work cooperatively
-
             X_lof_test = self.feat_model.predict(X_test)
             lof_preds = self.lof.predict(X_lof_test)
 

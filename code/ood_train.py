@@ -11,7 +11,7 @@ def evaluate(dataset, model, model_name, embed_f, limit_num_sents):
     start_time_train = time.time()
 
     # Split dataset
-    if model_name == 'ADBThreshold' or model_name == 'AdaptiveDecisionBoundaryNN':
+    if model_name == 'ADBThreshold' or model_name == 'AdaptiveDecisionBoundaryNN' or model_name == 'CosFaceLOFNN':
         train_dataset = dataset['train']
     else:
         train_dataset = dataset['train'] + dataset['oos_train']
@@ -21,11 +21,13 @@ def evaluate(dataset, model, model_name, embed_f, limit_num_sents):
 
     # Train
     if model_name in NEEDS_VAL:
-        X_val, y_val = split.get_X_y(dataset['val'] + dataset['oos_val'], limit_num_sents=limit_num_sents,
-                                     set_type='val')
-
         if model_name == 'CosFaceLOFNN':
-            model.oos_label = split.intents_dct['oos']
+            val_dataset = dataset['val']
+        else:
+            val_dataset = dataset['val'] + dataset['oos_val']
+
+        X_val, y_val = split.get_X_y(val_dataset, limit_num_sents=limit_num_sents,
+                                     set_type='val')
 
         model.fit(X_train, y_train, X_val, y_val)
     else:
@@ -61,7 +63,7 @@ def evaluate(dataset, model, model_name, embed_f, limit_num_sents):
     # print(model.delta)
     # ------------------
 
-    if model_name == 'ADBThreshold' or model_name == 'AdaptiveDecisionBoundaryNN':
+    if model_name == 'ADBThreshold' or model_name == 'AdaptiveDecisionBoundaryNN' or model_name == 'CosFaceLOFNN':
         model.oos_label = split.intents_dct['oos']
 
     # Test
