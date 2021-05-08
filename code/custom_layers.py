@@ -185,8 +185,8 @@ class AdaptiveDecisionBoundary(layers.Layer):
 
             distance = tf.linalg.diag_part(distance)
 
-        pos_mask = tf.cast([distance >= d], dtype=tf.float32)
-        neg_mask = tf.cast([distance < d], dtype=tf.float32)
+        pos_mask = tf.cast([distance > d], dtype=tf.float32)
+        neg_mask = tf.cast([distance <= d], dtype=tf.float32)
 
         pos_loss = (distance - d) * pos_mask
         neg_loss = (d - distance) * neg_mask
