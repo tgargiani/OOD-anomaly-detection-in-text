@@ -116,10 +116,7 @@ class AdaptiveDecisionBoundaryNN:
 
         embedding_input = layers.Input(shape=(emb_dim))
         label_input = layers.Input(shape=())
-        dense_output = layers.Dense(emb_dim, activation=activations.relu)(embedding_input)
-        dense_output = layers.Dense(emb_dim, activation=activations.relu)(dense_output)
-        dense_output = layers.Dense(emb_dim, activation=activations.relu)(dense_output)
-        loss = AdaptiveDecisionBoundary(num_classes, self.centroids, self.dist_type)((dense_output, label_input))
+        loss = AdaptiveDecisionBoundary(num_classes, self.centroids, self.dist_type)((embedding_input, label_input))
         self.model = tf.keras.Model(inputs=[embedding_input, label_input], outputs=loss)
 
         self.model.compile(optimizer=tf.keras.optimizers.Adam(learning_rate=0.01), loss=None)
