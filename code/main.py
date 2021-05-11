@@ -100,7 +100,7 @@ embedding_functions = {}  # uncomment them one by one when measuring memory usag
 #                                                                           type='softmax')
 # embedding_functions['use_dan_cosface'], time_pretraining = create_embed_f(use_dan, dataset, LIMIT_NUM_SENTS,
 #                                                                           type='cosface', visualize=False)
-# embedding_functions['use_dan_triplet_loss'], time_pretraining = create_embed_f(use_dan, dataset, limit_num_sents=None,
+# embedding_functions['use_dan_triplet_loss'], time_pretraining = create_embed_f(use_dan, dataset, LIMIT_NUM_SENTS,
 #                                                                                type='triplet_loss', visualize=False,
 #                                                                                emb_name='use_dan')
 #
