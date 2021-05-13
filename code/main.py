@@ -23,9 +23,9 @@ imports = []
 # from ood_train import evaluate
 #
 # imports.append((evaluate, [
-#     ADBThreshold(alpha=1.35),  # best for CLINC150
-#     ADBThreshold(alpha=0.6),  # best for ROSTD
-#     ADBThreshold(alpha=1.0), # best for Lucid Lindia
+#     ADBThreshold(alpha=1.45),  # best for CLINC150
+#     ADBThreshold(alpha=0.2),  # best for ROSTD
+#     ADBThreshold(alpha=1.0), # best for Lucid Lindia – TODO: change
 #     AdaptiveDecisionBoundaryNN('angular'),
 #     AdaptiveDecisionBoundaryNN('cosine'),
 #     AdaptiveDecisionBoundaryNN('euclidean'),
@@ -147,7 +147,7 @@ else:
     from ood_train import evaluate
 
     # model = AdaptiveDecisionBoundaryNN('euclidean')
-    model = ADBThreshold(1.35)
+    model = ADBThreshold(1.45)
     model_name = type(model).__name__
     use_tran = hub.load(USE_TRAN_PATH)
 

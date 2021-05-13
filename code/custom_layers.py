@@ -19,7 +19,7 @@ class CosFace(layers.Layer):
     def __init__(self,
                  num_classes,
                  s=64.0,
-                 m=0.1,
+                 m=0.35,
                  regularizer=None,
                  name='cosface',
                  **kwargs):

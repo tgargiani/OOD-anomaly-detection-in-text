@@ -45,7 +45,7 @@ def create_bert_embed_f(dataset, limit_num_sents, type: str):
         shuffle = True  # shuffle before every epoch in order to guarantee diversity in pos and neg samples
         batch_size = 64  # same as above; larger batch size results in OOM error
 
-    model.compile(optimizer=optimizers.Adam(learning_rate=2e-5), loss=loss, metrics=['accuracy'])
+    model.compile(optimizer=optimizers.Adam(learning_rate=2e-5), loss=loss)
 
     if type in ['softmax', 'triplet_loss']:
         X = [train_input_ids, train_attention_mask, train_token_type_ids]
@@ -104,14 +104,14 @@ def create_embed_f(old_embed_f, dataset, limit_num_sents, type: str, visualize=F
         shuffle = True  # shuffle before every epoch in order to guarantee diversity in pos and neg samples
         batch_size = 300  # same as above - to guarantee...
 
-    model.compile(optimizer=optimizers.Adam(learning_rate=2e-5), loss=loss, metrics=['accuracy'])
+    model.compile(optimizer=optimizers.Adam(learning_rate=1e-4), loss=loss)
 
     if type in ['softmax', 'triplet_loss']:
         X = X_train
     else:  # cosface
         X = [X_train, y_train]
 
-    model.fit(X, y_train, epochs=80, shuffle=shuffle, batch_size=batch_size)
+    model.fit(X, y_train, epochs=20, shuffle=shuffle, batch_size=batch_size)
 
     if visualize:
         pca = PCA(n_components=2)

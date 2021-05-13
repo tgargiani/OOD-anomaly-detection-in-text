@@ -8,9 +8,9 @@ import tensorflow as tf
 def find_best_radius(X_train, y_train, centroids, alpha, step_size):
     """
     Best alpha (hyperparameter) for dataset:
-    – CLINC150 – 1.35
-    – ROSTD – 0.6
-    – Lucid Lindia – 1.0
+    – CLINC150 – 1.45
+    – ROSTD – 0.2
+    – Lucid Lindia – 1.0 TODO: change
     """
 
     X, y = np.asarray(X_train), np.asarray(y_train)
