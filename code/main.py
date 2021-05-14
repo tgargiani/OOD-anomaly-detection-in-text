@@ -147,7 +147,7 @@ else:
     from ood_train import evaluate
 
     # model = AdaptiveDecisionBoundaryNN('euclidean')
-    model = ADBThreshold(1.45)
+    model = ADBThreshold(1.45)  # best for CLINC150
     model_name = type(model).__name__
     use_tran = hub.load(USE_TRAN_PATH)
 
@@ -220,4 +220,4 @@ else:
             print_results(dataset_name, model_name, 'use_tran_cosface', dct_cosface)
             print_results(dataset_name, model_name, 'use_tran_triplet_loss', dct_triplet_loss)
 
-        save_results(dataset_name, results_dct)
+        save_results(results_dct, dataset_name, model_name)

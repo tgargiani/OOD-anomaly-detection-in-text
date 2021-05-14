@@ -269,9 +269,9 @@ def get_filtered_lst(lst, selection):
     return filtered_lst
 
 
-def save_results(dataset_name, results_dct):
+def save_results(results_dct, dataset_name, model_name):
     if dataset_name == 'clinc150-data_full':
-        path = os.path.join(RESULTS_CLINC150_RIS_PATH, 'results.json')
+        path = os.path.join(RESULTS_CLINC150_RIS_PATH, f'{model_name}_results.json')
     else:
         raise ValueError("Wrong dataset name! Can't save.")
 
