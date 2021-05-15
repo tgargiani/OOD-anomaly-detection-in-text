@@ -12,7 +12,7 @@ from sentence_transformers import SentenceTransformer
 from sklearn.linear_model import LogisticRegression
 from statistics import mean
 
-RANDOM_SELECTION = True  # am I testing using the random selection of IN intents?
+RANDOM_SELECTION = False  # am I testing using the random selection of IN intents?
 repetitions = 5  # number of evaluations when using random selection
 LIMIT_NUM_SENTS = None  # either None (i.e. no limit) or int with value > 0 (i.e. maximal number of sentences per class).
 # LIMIT_NUM_SENTS is ignored when RANDOM_SELECTION is True
@@ -25,7 +25,7 @@ imports = []
 # imports.append((evaluate, [
 #     ADBThreshold(alpha=1.45),  # best for CLINC150
 #     ADBThreshold(alpha=0.2),  # best for ROSTD
-#     ADBThreshold(alpha=1.0), # best for Lucid Lindia – TODO: change
+#     ADBThreshold(alpha=1.0), # best for Lucid Lindia
 #     AdaptiveDecisionBoundaryNN('angular'),
 #     AdaptiveDecisionBoundaryNN('cosine'),
 #     AdaptiveDecisionBoundaryNN('euclidean'),

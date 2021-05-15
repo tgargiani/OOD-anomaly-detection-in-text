@@ -10,7 +10,7 @@ def find_best_radius(X_train, y_train, centroids, alpha, step_size):
     Best alpha (hyperparameter) for dataset:
     – CLINC150 – 1.45
     – ROSTD – 0.2
-    – Lucid Lindia – 1.0 TODO: change
+    – Lucid Lindia – 1.0
     """
 
     X, y = np.asarray(X_train), np.asarray(y_train)

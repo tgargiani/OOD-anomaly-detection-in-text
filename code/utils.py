@@ -281,47 +281,45 @@ def save_results(results_dct, dataset_name, model_name):
 
 def get_unsplit_Xy_ID_OOD(dialogue_path):
     category = dialogue_path.split(sep=os.sep)[-2]
-    ood_clinc_path = os.path.join(DS_LL_PATH, 'data_clinc_ood', f'{category}_ood.json')
     ood_cross_path = os.path.join(DS_LL_PATH, 'data_cross_ood', f'{category}_ood.json')
 
     with open(dialogue_path) as f:
         dialogue = json.load(f)
 
-    decision_nodes = dialogue['decisionNodes']
-    intents_sel = []
-
-    for node in decision_nodes:
-        for link in dialogue['links'][str(node)]:
-            intents_sel.append(str(link))
-
-    Xy_ID = []
-
-    for intent in intents_sel:
-        if intent not in dialogue['intents'].keys():
-            continue
-
-        for sent in dialogue['intents'][intent]['original_plus_noised']:
-            Xy_ID.append([sent, intent])
-
-    for intent in dialogue['globalIntents']:
-        for sent in dialogue['globalIntents'][intent]['original_plus_noised']:
-            Xy_ID.append([sent, intent])
-
+    # out-of-domain
     Xy_OOD = []
-
-    with open(ood_clinc_path) as f:
-        ood_clinc = json.load(f)
 
     with open(ood_cross_path) as f:
         ood_cross = json.load(f)
 
-    for sent in ood_clinc['ood']:
-        Xy_OOD.append([sent, 'oos'])
-
     for sent in ood_cross['ood']:
         Xy_OOD.append([sent, 'oos'])
 
-    return Xy_ID, Xy_OOD
+    # in-domain global
+    Xy_ID_global = []
+
+    for intent in dialogue['globalIntents']:
+        for sent in dialogue['globalIntents'][intent]['original_plus_noised']:
+            Xy_ID_global.append([sent, intent])
+
+    # in-domain local
+    intents_decision_nodes = {}
+
+    for node in dialogue['decisionNodes']:
+        Xy_ID = []
+
+        for intent in dialogue['links'][str(node)]:
+            if intent not in dialogue['intents'].keys():
+                continue
+
+            for sent in dialogue['intents'][intent]['original_plus_noised']:
+                Xy_ID.append([sent, intent])
+
+        Xy_ID += Xy_ID_global
+
+        intents_decision_nodes[node] = (Xy_ID, Xy_OOD)
+
+    return intents_decision_nodes
 
 
 def cross_val_evaluate(categories, evaluate, model, model_name, emb_name, embed_f, limit_num_sents):
@@ -329,59 +327,48 @@ def cross_val_evaluate(categories, evaluate, model, model_name, emb_name, embed_
     dct_results_lst = []
     total_time_pretraining = 0
 
+    if original_emb_name == 'placeholder':
+        import tensorflow_hub as hub
+        from custom_embeddings import create_embed_f
+
+        use_embed = hub.load(USE_DAN_PATH)
+        emb_name = 'use_dan_cosface'
+
+        # use_embed = hub.load(USE_TRAN_PATH)
+        # emb_name = 'use_tran_cosface'
+
     for cat in categories:
         cat_path = os.path.join(DS_LL_PATH, 'data', cat)
         dataset_paths = [os.path.join(cat_path, ds) for ds in os.listdir(cat_path)]
 
         for dialogue_path in dataset_paths:
-            Xy_ID, Xy_OOD = get_unsplit_Xy_ID_OOD(dialogue_path)
-            y_ID = [x[1] for x in Xy_ID]
-            y_OOD = [x[1] for x in Xy_OOD]
+            intents_decision_nodes = get_unsplit_Xy_ID_OOD(dialogue_path)
 
-            if original_emb_name == 'placeholder':
-                import tensorflow_hub as hub
-                from custom_embeddings import create_embed_f
+            for (Xy_ID, Xy_OOD) in intents_decision_nodes.values():
+                y_ID = [x[1] for x in Xy_ID]
+                y_OOD = [x[1] for x in Xy_OOD]
 
-                use_dan = hub.load(USE_DAN_PATH)
-                # emb_name, (embed_f, time_pretraining) = 'use_dan_softmax', create_embed_f(use_dan, {'train': Xy_ID},
-                #                                                                           limit_num_sents,
-                #                                                                           type='softmax')
-                emb_name, (embed_f, time_pretraining) = 'use_dan_cosface', create_embed_f(use_dan, {'train': Xy_ID},
-                                                                                          limit_num_sents,
-                                                                                          type='cosface')
-                # emb_name, (embed_f, time_pretraining) = 'use_dan_triplet_loss', create_embed_f(use_dan,
-                #                                                                                {'train': Xy_ID},
-                #                                                                                limit_num_sents,
-                #                                                                                type='triplet_loss')
-                #
-                # use_tran = hub.load(USE_TRAN_PATH)
-                # emb_name, (embed_f, time_pretraining) = 'use_tran_cosface', create_embed_f(use_tran, {'train': Xy_ID},
-                #                                                                            limit_num_sents,
-                #                                                                            type='cosface')
-                # emb_name, (embed_f, time_pretraining) = 'use_tran_triplet_loss', create_embed_f(use_tran,
-                #                                                                                 {'train': Xy_ID},
-                #                                                                                 limit_num_sents,
-                #                                                                                 type='triplet_loss')
+                dataset = {}
+                skf = StratifiedKFold(n_splits=5)
 
-                total_time_pretraining += time_pretraining
+                for (train_idx_ID, test_idx_ID), (train_idx_OOD, test_idx_OOD) in zip(skf.split(Xy_ID, y_ID),
+                                                                                      skf.split(Xy_OOD, y_OOD)):
+                    train_idx_ID, val_idx_ID = train_test_split(train_idx_ID, test_size=0.2)
+                    dataset['train'] = [Xy_ID[i] for i in train_idx_ID]
+                    dataset['val'] = [Xy_ID[i] for i in val_idx_ID]
+                    dataset['test'] = [Xy_ID[i] for i in test_idx_ID]
 
-            dataset = {}
-            skf = StratifiedKFold(n_splits=10)
+                    train_idx_OOD, val_idx_OOD = train_test_split(train_idx_OOD, test_size=0.2)
+                    dataset['oos_train'] = [Xy_OOD[i] for i in train_idx_OOD]
+                    dataset['oos_val'] = [Xy_OOD[i] for i in val_idx_OOD]
+                    dataset['oos_test'] = [Xy_OOD[i] for i in test_idx_OOD]
 
-            for (train_idx_ID, test_idx_ID), (train_idx_OOD, test_idx_OOD) in zip(skf.split(Xy_ID, y_ID),
-                                                                                  skf.split(Xy_OOD, y_OOD)):
-                train_idx_ID, val_idx_ID = train_test_split(train_idx_ID, test_size=0.2)
-                dataset['train'] = [Xy_ID[i] for i in train_idx_ID]
-                dataset['val'] = [Xy_ID[i] for i in val_idx_ID]
-                dataset['test'] = [Xy_ID[i] for i in test_idx_ID]
+                    if original_emb_name == 'placeholder':
+                        embed_f, time_pretraining = create_embed_f(use_embed, dataset, limit_num_sents, type='cosface')
+                        total_time_pretraining += time_pretraining
 
-                train_idx_OOD, val_idx_OOD = train_test_split(train_idx_OOD, test_size=0.2)
-                dataset['oos_train'] = [Xy_OOD[i] for i in train_idx_OOD]
-                dataset['oos_val'] = [Xy_OOD[i] for i in val_idx_OOD]
-                dataset['oos_test'] = [Xy_OOD[i] for i in test_idx_OOD]
-
-                results_dct = evaluate(dataset, model, model_name, embed_f, limit_num_sents)
-                dct_results_lst.append(results_dct)
+                    results_dct = evaluate(dataset, model, model_name, embed_f, limit_num_sents)
+                    dct_results_lst.append(results_dct)
 
     results_dct = {}
     num_results = len(dct_results_lst)
