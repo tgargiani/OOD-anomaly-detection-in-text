@@ -5,8 +5,12 @@ import matplotlib.pyplot as plt
 import numpy as np
 
 # model_name = 'AdaptiveDecisionBoundaryNN_euclidean'
+# name = 'ADB'
+
 model_name = 'ADBThreshold'
-path = os.path.join(RESULTS_CLINC150_RIS_PATH, f'results_{model_name}.json')
+name = 'Proposed method'
+
+path = os.path.join(RESULTS_CLINC150_RIS_PATH, f'{model_name}_results.json')
 
 with open(path, 'r') as f:
     results = json.load(f)
@@ -18,17 +22,22 @@ for num_intents in results:
 
     labels = list(results[num_intents].keys())
     fig, ax = plt.subplots()
-    plt.title(f'{model_name} – {num_intents} intents')
+    plt.title(f'{name} – {num_intents} intents')
 
     for e, emb in enumerate(['use_tran_cosface', 'use_tran_triplet_loss']):
         accuracy_lst = [d[emb]['accuracy'] for d in results[num_intents].values()]
         recall_lst = [d[emb]['recall'] for d in results[num_intents].values()]
 
-        accuracy_p, = ax.plot(labels, accuracy_lst, '-', label=f'{emb} – accuracy')
-        recall_p, = ax.plot(labels, recall_lst, '--', color=accuracy_p.get_color(), label=f'{emb} – recall')
+        if emb == 'use_tran_cosface':
+            emb_name = 'USE-TRAN + LMCL'
+        else:
+            emb_name = 'USE-TRAN + Triplet Loss'
+
+        accuracy_p, = ax.plot(labels, accuracy_lst, '-', label=f'Accuracy ({emb_name})')
+        recall_p, = ax.plot(labels, recall_lst, '--', color=accuracy_p.get_color(), label=f'Recall ({emb_name})')
         ax.legend()
 
-    ax.set(xlabel='Number of sentences per intent', ylabel='Accuracy and recall [%]')
+    ax.set(xlabel='Number of training sentences per intent', ylabel='Accuracy and recall [%]')
     ax.set_xticks(labels)
     ax.set_yticks(y_labels)
 
