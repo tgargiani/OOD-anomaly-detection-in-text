@@ -309,10 +309,12 @@ def get_unsplit_Xy_ID_OOD(dialogue_path):
         Xy_ID = []
 
         for intent in dialogue['links'][str(node)]:
-            if intent not in dialogue['intents'].keys():
+            intent_str = str(intent)
+
+            if intent_str not in dialogue['intents'].keys():
                 continue
 
-            for sent in dialogue['intents'][intent]['original_plus_noised']:
+            for sent in dialogue['intents'][intent_str]['original_plus_noised']:
                 Xy_ID.append([sent, intent])
 
         Xy_ID += Xy_ID_global
