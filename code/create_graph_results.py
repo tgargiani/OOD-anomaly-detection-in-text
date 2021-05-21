@@ -64,10 +64,10 @@ else:
 
         labels = list(results_our[num_intents].keys())
         fig, ax = plt.subplots()
-        plt.title(f'Proposed Method and ADB – {num_intents} intents')
+        plt.title(f'Our Proposed Method and ADB – {num_intents} intents')
 
-        for method in ['Proposed Method', 'ADB']:
-            if method == 'Proposed Method':
+        for method in ['Our Proposed Method', 'ADB']:
+            if method == 'Our Proposed Method':
                 results = results_our
             else:
                 results = results_adb
